@@ -1,0 +1,16 @@
+{
+  "name": "survey-backend",
+  "version": "1.0.0",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "anas hesham",
+  "license": "ISC",
+  "description": "Backend API for Survey Platform",
+  "dependencies": {
+    "express": "^5.2.1"
+  },
+  "type": "module"
+}
