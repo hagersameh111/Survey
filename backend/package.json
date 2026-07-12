@@ -10,6 +10,7 @@
   "license": "ISC",
   "description": "Backend API for Survey Platform",
   "dependencies": {
+    "dotenv": "^17.4.2",
     "express": "^5.2.1"
   },
   "type": "module"
