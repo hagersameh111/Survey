@@ -1,13 +1,9 @@
 import express from "express";
+import authRoutes from "./modules/auth/auth.routes.js";
 const app = express();
 
-app.use((req, res, next) => {
-  console.log("Middleware is running...");
-  next();
-});
+app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send("Hello Express");
-});
+app.use("/api/v1/auth", authRoutes);
 
 export default app;
