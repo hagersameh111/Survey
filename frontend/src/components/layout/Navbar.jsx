@@ -15,7 +15,7 @@ const Navbar = ({
     {
       title: "Forms",
       icon: FileText,
-      path: "/forms",
+      path: "/form-builder",
     },
     {
       title: "Responses",
