@@ -1,5 +1,4 @@
 import { useState } from "react";
-
 import UrlRow from "./UrlRow";
 import CopyButton from "./CopyButton";
 import ExpirationPicker from "./ExpirationPicker";
@@ -8,6 +7,7 @@ import SaveButton from "./SaveButton";
 import AddNewButton from "./AddNewButton";
 import AddNewMenu from "./AddNewMenu";
 import QRModal from "./QRModal";
+import FileGeneratorList from "./FileGeneratorList";
 
 const createRow = () => ({
   id: Date.now() + Math.random(),
@@ -18,17 +18,21 @@ const createRow = () => ({
 const UrlList = () => {
   const [rows, setRows] = useState([createRow()]);
   const [showMenu, setShowMenu] = useState(false);
+  
+  // State to track whether we are viewing URLs or the File Link Generator
+  const [activeView, setActiveView] = useState("urls"); // 'urls' or 'files'
 
   const [qrOpen, setQrOpen] = useState(false);
   const [selectedUrl, setSelectedUrl] = useState("");
 
   const addUrlRow = () => {
+    setActiveView("urls"); // switch back to URL list if adding a URL row
     setRows((prev) => [...prev, createRow()]);
     setShowMenu(false);
   };
 
   const handleFileGenerator = () => {
-    console.log("File Generator");
+    setActiveView("files"); // switch view to File Generator list
     setShowMenu(false);
   };
 
@@ -39,65 +43,61 @@ const UrlList = () => {
 
   return (
     <div className="relative">
-      {/* URL Rows */}
+      
+      {/* Conditionally render URL Rows list or File Generator view */}
+      {activeView === "urls" ? (
+        <div className="space-y-6">
+          {rows.map((row) => (
+            <div
+              key={row.id}
+              className="flex items-center gap-3"
+            >
+              <UrlRow
+                row={row}
+                onShorten={(url) => {
+                  console.log("Shorten:", url);
+                }}
+              />
 
-      <div className="space-y-6">
-        {rows.map((row) => (
-          <div
-            key={row.id}
-            className="flex items-center gap-3"
-          >
-            <UrlRow
-              row={row}
-              onShorten={(url) => {
-                console.log("Shorten:", url);
+              <CopyButton
+                onClick={() => {
+                  navigator.clipboard.writeText(row.shortUrl);
+                }}
+              />
 
-                // Backend:
-                // const short = await shortenUrl(url)
-                // update row.shortUrl
-              }}
-            />
-
-            <CopyButton
-              onClick={() => {
-                navigator.clipboard.writeText(row.shortUrl);
-              }}
-            />
-
-            <ExpirationPicker
-              value={row.expiration}
-              onChange={(value) =>
-                setRows((prev) =>
-                  prev.map((r) =>
-                    r.id === row.id
-                      ? {
-                          ...r,
-                          expiration: value,
-                        }
-                      : r
+              <ExpirationPicker
+                value={row.expiration}
+                onChange={(value) =>
+                  setRows((prev) =>
+                    prev.map((r) =>
+                      r.id === row.id
+                        ? {
+                            ...r,
+                            expiration: value,
+                          }
+                        : r
+                    )
                   )
-                )
-              }
-            />
+                }
+              />
 
-            <QRCodeButton
-              onClick={() => openQR(row.shortUrl)}
-            />
+              <QRCodeButton
+                onClick={() => openQR(row.shortUrl)}
+              />
 
-            <SaveButton
-              onClick={() => {
-                console.log("Save Row", row);
+              <SaveButton
+                onClick={() => {
+                  console.log("Save Row", row);
+                }}
+              />
+            </div>
+          ))}
+        </div>
+      ) : (
+        <FileGeneratorList />
+      )}
 
-                // Backend:
-                // await saveRow(row)
-              }}
-            />
-          </div>
-        ))}
-      </div>
-
-      {/* Add New */}
-
+      {/* Add New Section */}
       <div className="relative mt-6 inline-block">
         <AddNewButton
           onClick={() => setShowMenu((prev) => !prev)}
@@ -113,7 +113,6 @@ const UrlList = () => {
       </div>
 
       {/* QR Modal */}
-
       <QRModal
         open={qrOpen}
         url={selectedUrl}

@@ -1,53 +1,79 @@
-import { X, Download } from "lucide-react";
+import { useState } from "react";
+import { X, Download, Check, FileText, Image as ImageIcon } from "lucide-react";
 import QRCode from "react-qr-code";
 
 const QRModal = ({ open, onClose, url }) => {
+  const [downloadingFormat, setDownloadingFormat] = useState(null);
+
   if (!open) return null;
 
+  const targetUrl = url || "https://form.formhub.com/to/INYXidiE";
+
+  const handleDownload = (format) => {
+    setDownloadingFormat(format);
+    
+    // Simulate export process
+    setTimeout(() => {
+      setDownloadingFormat(null);
+      alert(`Successfully downloaded QR Code as .${format.toUpperCase()}`);
+    }, 1000);
+  };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
-      <div className="w-[600px] rounded-3xl bg-white shadow-2xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+      <div className="w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden flex flex-col">
         
-        {/* Header */}
-        <div className="flex items-center justify-between px-8 pt-6 pb-4">
-          <h2 className="text-2xl font-semibold text-text">QR Code</h2>
-          <button onClick={onClose} className="rounded-lg p-2 text-text-secondary hover:bg-background hover:text-text transition">
+        {/* Modal Header */}
+        <div className="flex items-center justify-between px-8 py-6 border-b border-border">
+          <div>
+            <h2 className="text-xl font-semibold text-text">QR Code Generator</h2>
+            <p className="text-xs text-text-secondary mt-0.5">Scan or export code for marketing materials</p>
+          </div>
+          <button 
+            onClick={onClose} 
+            className="rounded-lg p-2 text-text-secondary hover:bg-background hover:text-text transition cursor-pointer"
+          >
             <X size={20} />
           </button>
         </div>
 
-        {/* QR Code Area */}
-        <div className="flex flex-col items-center px-8 py-8">
-          <div className="rounded-2xl bg-white p-4">
-            <QRCode value={url || "https://form.formhub.com/to/INYXidiE"} size={200} />
+        {/* QR Display Area */}
+        <div className="flex flex-col items-center p-8 bg-background/50">
+          <div className="rounded-2xl bg-white p-6 shadow-xs border border-border flex items-center justify-center">
+            <QRCode value={targetUrl} size={180} />
           </div>
           
           <a
-            href={url || "https://form.formhub.com/to/INYXidiE"}
+            href={targetUrl}
             target="_blank"
             rel="noreferrer"
-            className="mt-6 text-sm text-primary underline"
+            className="mt-5 text-sm font-medium text-primary underline truncate max-w-xs text-center"
           >
-            {url || "https://form.formhub.com/to/INYXidiE"}
+            {targetUrl}
           </a>
         </div>
 
-        {/* Download Buttons */}
-        <div className="flex items-center justify-center gap-4 px-8 pb-8">
-          <button className="flex items-center gap-3 rounded-xl border border-border px-5 py-3 text-sm font-medium text-text transition hover:border-primary hover:text-primary">
-            <span>Download as pdf</span>
-            <Download size={16} />
-          </button>
-
-          <button className="flex items-center gap-3 rounded-xl border border-border px-5 py-3 text-sm font-medium text-text transition hover:border-primary hover:text-primary">
-            <span>Download as png</span>
-            <Download size={16} />
-          </button>
-
-          <button className="flex items-center gap-3 rounded-xl border border-border px-5 py-3 text-sm font-medium text-text transition hover:border-primary hover:text-primary">
-            <span>Download as jpg</span>
-            <Download size={16} />
-          </button>
+        {/* Export / Download Options */}
+        <div className="p-8 bg-white border-t border-border space-y-4">
+          <label className="block text-xs font-semibold text-text uppercase tracking-wider">Export Formats</label>
+          
+          <div className="grid grid-cols-3 gap-3">
+            {["pdf", "png", "jpg"].map((format) => (
+              <button
+                key={format}
+                onClick={() => handleDownload(format)}
+                disabled={downloadingFormat === format}
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-white px-4 py-3 text-sm font-medium text-text transition hover:border-primary hover:text-primary cursor-pointer disabled:opacity-50"
+              >
+                {downloadingFormat === format ? (
+                  <Check size={16} className="text-green-600 animate-bounce" />
+                ) : (
+                  <Download size={16} className="text-text-muted" />
+                )}
+                <span>.{format.toUpperCase()}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
       </div>

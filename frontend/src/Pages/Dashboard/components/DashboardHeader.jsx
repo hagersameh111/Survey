@@ -1,12 +1,7 @@
 import { useState } from "react";
-import {
-  CalendarDays,
-  UserPlus,
-  MoreHorizontal,
-  ChevronDown,
-} from "lucide-react";
-
+import { CalendarDays, UserPlus, ChevronDown } from "lucide-react";
 import ViewSwitcher from "./ViewSwitcher";
+import WorkspaceDropdown from "./WorkspaceDropdown";
 import InviteMembersModal from "../../../components/modals/InviteMembersModal";
 
 const DashboardHeader = () => {
@@ -15,30 +10,22 @@ const DashboardHeader = () => {
   return (
     <>
       <div className="flex items-center justify-between">
-        {/* Left */}
+        {/* Left: Interactive Workspace Dropdown */}
         <div className="flex items-center gap-6">
-          <div className="flex items-center gap-2">
-            <h1 className="text-4xl font-medium text-text">
-              My workspace
-            </h1>
-
-            <button className="text-text-muted transition hover:text-primary">
-              <MoreHorizontal size={20} />
-            </button>
-          </div>
+          <WorkspaceDropdown />
 
           <button
             onClick={() => setShowInviteModal(true)}
-            className="flex items-center gap-2 text-text-secondary transition hover:text-primary"
+            className="flex items-center gap-2 text-text-secondary transition hover:text-primary font-medium text-sm"
           >
             <UserPlus size={18} />
             Invite
           </button>
         </div>
 
-        {/* Right */}
+        {/* Right: Filtering & Views */}
         <div className="flex items-center gap-4">
-          <button className="flex h-11 items-center gap-2 rounded-xl border border-border bg-white px-5 text-text-secondary transition hover:border-primary">
+          <button className="flex h-11 items-center gap-2 rounded-xl border border-border bg-white px-5 text-text-secondary transition hover:border-primary text-sm font-medium">
             <CalendarDays size={18} />
             Date created
             <ChevronDown size={18} />

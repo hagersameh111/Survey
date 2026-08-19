@@ -9,6 +9,8 @@ import FormBuilder from "./Pages/FormBuilder/FormBuilder.jsx";
 import Responses from "./Pages/Responses/Responses.jsx";
 import UrlShortener from "./Pages/UrlShortener/UrlShortener.jsx";
 import BuilderContent from "./Pages/FormBuilder/Components/BuilderContent.jsx"; 
+import WelcomePage from "./Pages/FormBuilder/pages/WelcomePage.jsx";
+import PublicForm from "./Pages/PublicForm/PublicForm.jsx";
 
 const NotFound = () => (
   <div className="flex min-h-screen items-center justify-center text-3xl font-bold text-text">
@@ -30,7 +32,8 @@ createRoot(document.getElementById("root")).render(
         {/* Form Builder has its own distinct full-screen layout */}
         <Route path="/form-builder" element={<FormBuilder />} />
         <Route path="/builder-content" element={<BuilderContent />} />
-
+        <Route path="/welcome" element={<WelcomePage />} />
+<Route path="/view" element={<PublicForm />} />
         {/* 404 Catch-all */}
         <Route path="*" element={<NotFound />} />
       </Routes>

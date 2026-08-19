@@ -4,13 +4,9 @@ import QuestionList from "./QuestionList";
 import PagesPanel from "./PagesPanel";
 import { initialQuestions } from "../../../data/mockData";
 
-const BuilderSidebar = () => {
-  const [questions, setQuestions] = useState(initialQuestions);
 
-  const handleDeleteQuestion = (id) => {
-    setQuestions((prev) => prev.filter((question) => question.id !== id));
-  };
 
+const BuilderSidebar = ({ selectedPage, setSelectedPage, questions, onDeleteQuestion }) => {
   return (
     <aside className="w-80 flex flex-col gap-6">
       <div className="rounded-3xl bg-surface p-6 shadow-sm">
@@ -19,8 +15,11 @@ const BuilderSidebar = () => {
           <span className="text-xl font-medium text-text-secondary">Service Evaluation Form</span>
         </div>
       </div>
-      <QuestionList questions={questions} onDeleteQuestion={handleDeleteQuestion} />
-      <PagesPanel />
+      
+      {/* Pass down live questions array */}
+      <QuestionList questions={questions} onDeleteQuestion={onDeleteQuestion} />
+      
+      <PagesPanel activePage={selectedPage} onSelectPage={setSelectedPage} />
     </aside>
   );
 };
