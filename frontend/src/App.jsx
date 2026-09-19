@@ -1,122 +1,73 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import "./App.css";
 
-function App() {
-  const [count, setCount] = useState(0)
+// 1. Auth & Layout Imports
+import AuthLayout from "./Pages/Auth/AuthLayout.jsx"; 
+import Login from "./Pages/Auth/Login.jsx";
+import SignUp from "./Pages/Auth/SignUp.jsx";
+import ForgotPassword from "./Pages/Auth/ForgotPassword.jsx";
+import OtpVerification from "./Pages/Auth/OtpVerification.jsx";
+import ResetPassword from "./Pages/Auth/ResetPassword.jsx"; 
+import Pricing from "./Pages/Auth/Pricing.jsx";
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+// 2. Dashboard & Shared Layout Imports
+import Layout from "./components/layout/Layout";
+import Dashboard from "./Pages/Dashboard/Dashboard.jsx";
+import Responses from "./Pages/Responses/Responses.jsx";
+import UrlShortener from "./Pages/UrlShortener/UrlShortener.jsx";
 
-      <div className="ticks"></div>
+// 3. Form Builder & Preview Imports
+import FormBuilder from "./Pages/FormBuilder/FormBuilder.jsx";
+import PublicForm from "./Pages/PublicForm/PublicForm.jsx";
+import AccountSettings from "./Pages/Settings/AccountSettings.jsx";
+import PricingCheckout from "./Pages/Settings/Pricingcheckout.jsx";
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+const NotFound = () => (
+  <div className="flex min-h-screen items-center justify-center text-3xl font-bold text-text">
+    404 - Page Not Found
+  </div>
+);
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
-}
+// 4. Render App
+createRoot(document.getElementById("root")).render(
+  <StrictMode>
+    <BrowserRouter>
+      <Routes>
+        
+        {/* Authentication Routes wrapped in split-screen AuthLayout */}
+        <Route element={<AuthLayout />}>
+          <Route path="/" element={<Login />} />
+          <Route path="/signup" element={<SignUp />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/verify-otp" element={<OtpVerification />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+        </Route>
+        
+        {/* Standalone Pricing Page */}
+       
+        <Route path="/pricing" element={<PricingCheckout />} />
 
-export default App
+        {/* Dashboard Routes that share the common Navbar & Sidebar layout */}
+        <Route element={<Layout />}>
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/responses" element={<Responses />} />
+          <Route path="/shortener" element={<UrlShortener />} />
+          <Route path="/account-settings" element={<AccountSettings />} />
+
+        </Route>
+
+        {/* Form Builder has its own distinct full-screen layout */}
+        <Route path="/form-builder" element={<FormBuilder />} />
+        
+        {/* Live Form Preview */}
+        <Route path="/view" element={<PublicForm />} />
+        
+        {/* 404 Catch-all */}
+        <Route path="*" element={<NotFound />} />
+        
+      </Routes>
+    </BrowserRouter>
+  </StrictMode>
+);

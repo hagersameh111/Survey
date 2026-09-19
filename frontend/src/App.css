@@ -1,1 +1,83 @@
 @import "tailwindcss";
+
+
+/* ==========================================
+   Theme
+========================================== */
+
+@theme {
+  /* Brand */
+  --color-primary: #1645B2;
+  --color-primary-hover: #123A96;
+  --color-primary-light: #EAF1FF;
+
+  /* Background */
+  --color-background: #F6F9FF;
+  --color-surface: #FAFAFA;
+
+  /* Text */
+  --color-text: #3C323E;
+  --color-text-secondary: #655D67;
+  --color-text-muted: #847E85;
+
+  /* Borders */
+  --color-border: #E3E7F2;
+
+  /* States */
+  --color-success: #16A34A;
+  --color-warning: #EAB308;
+  --color-danger: #DC2626;
+
+  /* Radius */
+  --radius-sm: 0.375rem;
+  --radius-md: 0.625rem;
+  --radius-lg: 1rem;
+  --radius-xl: 1.5rem;
+}
+
+/* ==========================================
+   Base
+========================================== */
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-text;
+    font-family: Inter, sans-serif;
+  }
+
+  button {
+    @apply cursor-pointer;
+  }
+}
+
+/* ==========================================
+   Components
+========================================== */
+
+@layer components {
+  .card {
+    @apply bg-surface rounded-xl shadow-sm border border-border;
+  }
+
+  .page-container {
+    @apply mx-auto max-w-7xl px-6;
+  }
+
+  .section-title {
+    @apply text-3xl font-semibold text-text;
+  }
+}
+
+/* ==========================================
+   Utilities
+========================================== */
+
+@layer utilities {
+  .transition-default {
+    @apply transition-all duration-200 ease-in-out;
+  }
+}
