@@ -2,7 +2,7 @@ import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import { Copy } from "lucide-react";
 import logo from "/logo.png";
-import PublishModal from "./PublishModal";
+import PublishModal from "../../Components/PublishModal";
 
 const BuilderNavbar = () => {
   const [publishOpen, setPublishOpen] = useState(false);

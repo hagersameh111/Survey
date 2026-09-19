@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Plus, Copy, Eye, Settings } from "lucide-react";
-import FormSettingsModal from "./FormSettingsModal";
+import FormSettingsModal from "../Shared/FormSettingsModal";
 
 const BuilderToolbar = ({ onAddQuestion }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);

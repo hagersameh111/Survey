@@ -1,19 +1,11 @@
-import {
-  List,
-  PanelLeft,
-  CheckCircle,
-  User,
-} from "lucide-react";
-
+import { List, PanelLeft, CheckCircle, User } from "lucide-react";
 import PageSection from "./PageSection";
-import PageItem from "../Builder/Shared/PageItem";
+import PageItem from "./PageItem";
 
 const PagesPanel = ({ activePage, onSelectPage }) => {
   return (
     <div className="mt-6 rounded-3xl bg-white p-6 shadow-sm">
-      <h2 className="mb-8 text-3xl font-bold">
-        Pages
-      </h2>
+      <h2 className="mb-8 text-3xl font-bold">Pages</h2>
 
       <PageSection title="">
         <PageItem
@@ -24,10 +16,7 @@ const PagesPanel = ({ activePage, onSelectPage }) => {
         />
       </PageSection>
 
-      <PageSection
-        title="Participant Bio"
-        showAdd
-      >
+      <PageSection title="Participant Bio" showAdd>
         <PageItem
           icon={User}
           title="Participant Bio"
@@ -44,10 +33,7 @@ const PagesPanel = ({ activePage, onSelectPage }) => {
         </div>
       </PageSection>
 
-      <PageSection
-        title="Finish Page"
-        showAdd
-      >
+      <PageSection title="Finish Page" showAdd>
         <PageItem
           icon={CheckCircle}
           title="Finish Page"

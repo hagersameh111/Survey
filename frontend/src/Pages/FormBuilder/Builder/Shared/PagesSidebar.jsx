@@ -9,13 +9,13 @@ const pages = [
 
 const PagesSidebar = ({ selectedPage, onSelectPage }) => {
   return (
-    <aside className="w-72">
+    <aside className="w-fit ">
       {/* Form Name */}
       <div className="mb-5 rounded-2xl bg-surface p-5 shadow-sm">
         <div className="flex items-center gap-3">
           <FileText size={20} className="text-text-secondary" />
           <span className="font-medium text-text-secondary">
-            Service Evaluation Form
+            Service Form
           </span>
         </div>
       </div>

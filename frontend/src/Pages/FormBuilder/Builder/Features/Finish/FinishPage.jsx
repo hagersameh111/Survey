@@ -1,12 +1,12 @@
 import { CheckCircle2 } from "lucide-react";
-import Breadcrumb from "../Components/Breadcrumb";
+import Breadcrumb from "../../Shared/Breadcrumb";
 
 const FinishPage = () => {
   return (
-    <main className="flex-1 rounded-2xl bg-surface p-12 shadow-sm">
+    <main className="flex-1 rounded-2xl bg-surface p-12 shadow-sm border border-border">
       <Breadcrumb />
       
-      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center py-20 text-center">
+      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center py-20 text-center min-h-[500px]">
         <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary-light text-primary">
           <CheckCircle2 size={40} />
         </div>
@@ -27,4 +27,4 @@ const FinishPage = () => {
   );
 };
 
-export default FinishPage; 
+export default FinishPage;

@@ -1,7 +1,7 @@
-import WelcomePage from "../pages/WelcomePage";
-import QuestionsPage from "../pages/QuestionsPage";
-import ParticipantBioPage from "./ParticipantBioPage";
-import FinishPage from "../pages/FinishPage";
+import WelcomePage from "./Features/Welcome/WelcomePage";
+import ParticipantBioPage from "./Features/ParticipantBio/ParticipantBioPage";
+import QuestionsPage from "./Features/Questions/QuestionsPage";
+import FinishPage from "./Features/Finish/FinishPage";
 
 const BuilderContent = ({ selectedPage, questions, onAddQuestion, onDeleteQuestion }) => {
   switch (selectedPage) {
@@ -20,15 +20,7 @@ const BuilderContent = ({ selectedPage, questions, onAddQuestion, onDeleteQuesti
     case "finish":
       return <FinishPage />;
     default:
-      // Fallback ensures a page always renders
-      return (
-        <QuestionsPage 
-        className="w-full"
-          questions={questions} 
-          onAddQuestion={onAddQuestion} 
-          onDeleteQuestion={onDeleteQuestion} 
-        />
-      );
+      return <QuestionsPage questions={questions} onAddQuestion={onAddQuestion} onDeleteQuestion={onDeleteQuestion} />;
   }
 };
 

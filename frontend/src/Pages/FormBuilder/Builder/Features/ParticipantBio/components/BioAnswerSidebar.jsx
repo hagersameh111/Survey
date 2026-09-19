@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import SwitchToggle from "./SwitchToggle";
+import SwitchToggle from "../../../Shared/SwitchToggle";
 import { GripVertical } from "lucide-react";
 
 const BioAnswerSidebar = () => {
@@ -21,7 +21,6 @@ const BioAnswerSidebar = () => {
       <div className="space-y-4">
         <h4 className="text-sm font-medium text-text-secondary">Required Fields</h4>
 
-        {/* Name Field Toggle */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-white p-3 shadow-xs">
           <div className="flex items-center gap-3 text-sm text-text font-medium">
             <GripVertical size={16} className="text-text-muted cursor-move" />
@@ -30,31 +29,12 @@ const BioAnswerSidebar = () => {
           <SwitchToggle checked={fields.name} onChange={() => handleToggle("name")} />
         </div>
 
-        {/* DOB Field Toggle */}
-        <div className="flex items-center justify-between rounded-xl border border-border bg-white p-3 shadow-xs">
-          <div className="flex items-center gap-3 text-sm text-text font-medium">
-            <GripVertical size={16} className="text-text-muted cursor-move" />
-            Date of Birth
-          </div>
-          <SwitchToggle checked={fields.dob} onChange={() => handleToggle("dob")} />
-        </div>
-
-        {/* Email Field Toggle */}
         <div className="flex items-center justify-between rounded-xl border border-border bg-white p-3 shadow-xs">
           <div className="flex items-center gap-3 text-sm text-text font-medium">
             <GripVertical size={16} className="text-text-muted cursor-move" />
             Email Address
           </div>
           <SwitchToggle checked={fields.email} onChange={() => handleToggle("email")} />
-        </div>
-
-        {/* Phone Field Toggle */}
-        <div className="flex items-center justify-between rounded-xl border border-border bg-white p-3 shadow-xs">
-          <div className="flex items-center gap-3 text-sm text-text font-medium">
-            <GripVertical size={16} className="text-text-muted cursor-move" />
-            Phone Number
-          </div>
-          <SwitchToggle checked={fields.phone} onChange={() => handleToggle("phone")} />
         </div>
       </div>
     </aside>

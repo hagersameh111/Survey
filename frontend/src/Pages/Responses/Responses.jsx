@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import ResponsesTable from "./components/ResponsesTable";
 import ResponseDetailModal from "./components/ResponseDetailModal";
-import responsesData from "./Data/responses"; // Adjust path to your responses data file if needed
+import responsesData from "./Data/responses"; // Ensure this matches your data path
 
 const Responses = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -17,7 +17,7 @@ const Responses = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Responses</h1>
         <div className="text-sm text-gray-500">
-          Responses collected: <span className="font-semibold text-gray-900">{responsesData.length} / 100</span>
+          Responses collected: <span className="font-semibold text-gray-900">{responsesData?.length || 0} / 100</span>
         </div>
       </div>
       

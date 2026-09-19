@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, Link } from "react-router-dom";
 import { FileText, Users, Link2 } from "lucide-react";
 
 import logo from "/logo.png";
@@ -33,7 +33,6 @@ const Navbar = ({
     <header className="px-4 pt-4">
       <nav className="flex h-14 items-center justify-between rounded-2xl bg-surface px-5 shadow-sm">
         {/* Logo */}
-
         <NavLink
           to="/"
           className="flex items-center gap-3"
@@ -43,14 +42,12 @@ const Navbar = ({
             alt="FormHub"
             className="h-8 w-auto"
           />
-
           <span className="text-lg font-semibold text-text">
             FormHub
           </span>
         </NavLink>
 
         {/* Navigation */}
-
         <div className="flex items-center gap-2">
           {navLinks.map(({ title, icon: Icon, path }) => (
             <NavLink
@@ -66,24 +63,27 @@ const Navbar = ({
               }
             >
               <Icon size={18} />
-
               {title}
             </NavLink>
           ))}
         </div>
 
         {/* User */}
-
         <div className="flex items-center gap-3">
-          <img
-            src={user.avatar}
-            alt={user.username}
-            className="h-10 w-10 rounded-full object-cover"
-          />
-
-          <span className="font-medium text-text">
-            {user.username}
-          </span>
+          {/* Wrapped avatar and username in a Link */}
+          <Link 
+            to="/account-settings" 
+            className="flex items-center gap-3 transition hover:opacity-80"
+          >
+            <img
+              src={user.avatar}
+              alt={user.username}
+              className="h-10 w-10 rounded-full object-cover"
+            />
+            <span className="font-medium text-text hover:text-primary transition">
+              {user.username}
+            </span>
+          </Link>
 
           <div className="rounded-lg border border-border bg-white px-3 py-1.5 text-sm text-text-secondary">
             {user.role}
