@@ -38,7 +38,7 @@ createRoot(document.getElementById("root")).render(
         
         {/* Authentication Routes wrapped in split-screen AuthLayout */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
+          <Route path="/" element={<Login />} />
           <Route path="/signup" element={<SignUp />} />
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/verify-otp" element={<OtpVerification />} />
@@ -51,7 +51,7 @@ createRoot(document.getElementById("root")).render(
 
         {/* Dashboard Routes that share the common Navbar & Sidebar layout */}
         <Route element={<Layout />}>
-          <Route path="/" element={<Dashboard />} />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/responses" element={<Responses />} />
           <Route path="/shortener" element={<UrlShortener />} />
           <Route path="/account-settings" element={<AccountSettings />} />

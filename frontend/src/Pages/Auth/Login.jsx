@@ -53,7 +53,9 @@ const Login = () => {
           type="submit"
           className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-medium text-white transition hover:bg-blue-700 shadow-sm"
         >
+          <Link to="/dashboard" className="w-full text-center">
           Login
+          </Link>
         </button>
       </form>
 
