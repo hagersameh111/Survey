@@ -46,7 +46,7 @@ function PrimaryButton({ children, icon: Icon, ...props }) {
   return (
     <button
       type="button"
-      className={`inline-flex items-center gap-2 rounded-lg bg-blue-800 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-900 ${focusRing}`}
+      className={`inline-flex items-center gap-2 rounded-lg bg-blue-800 px-2 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-900 ${focusRing}`}
       {...props}
     >
       {Icon && <Icon className="h-4 w-4" strokeWidth={1.75} />}
@@ -82,7 +82,7 @@ function OutlineButton({ children, ...props }) {
 function Card({ children, className = "" }) {
   return (
     <section
-      className={`rounded-2xl border border-slate-200 bg-white p-6 ${className}`}
+      className={`rounded-2xl border border-slate-200 bg-white p-2 ${className}`}
     >
       {children}
     </section>
@@ -195,7 +195,7 @@ function AccountSettingsPage() {
         description="Change your organization name and URL, set up custom email settings."
       />
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         <Card>
           <div className="flex items-center gap-3">
             <Avatar />
@@ -405,7 +405,7 @@ function Sidebar({ active, onChange }) {
       aria-label="Organization"
       className="w-full flex-shrink-0 rounded-2xl bg-blue-50 p-4 md:w-60 md:self-start md:min-h-[40rem]"
     >
-      <h2 className="px-3 pb-4 pt-3 text-lg text-slate-600">Organization</h2>
+      <h2 className="px-3 pb-2 pt-3 text-lg text-slate-600">Organization</h2>
       <ul className="space-y-1">
         {NAV_ITEMS.map((item) => {
           const isActive = item.id === active;
@@ -436,7 +436,7 @@ export default function OrganizationSettings() {
 
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800 antialiased">
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-screen px-4 py-6 sm:px-6">
         <a
           href="#workspaces"
           className={`mb-4 inline-flex items-center gap-2 rounded text-sm text-slate-700 hover:text-slate-900 ${focusRing}`}

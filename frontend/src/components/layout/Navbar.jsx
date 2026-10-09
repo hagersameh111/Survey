@@ -34,7 +34,7 @@ const Navbar = ({
       <nav className="flex h-14 items-center justify-between rounded-2xl bg-surface px-5 shadow-sm">
         {/* Logo */}
         <NavLink
-          to="/"
+          to="/dashboard"
           className="flex items-center gap-3"
         >
           <img
