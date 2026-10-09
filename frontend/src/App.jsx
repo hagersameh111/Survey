@@ -23,6 +23,7 @@ import FormBuilder from "./Pages/FormBuilder/FormBuilder.jsx";
 import PublicForm from "./Pages/PublicForm/PublicForm.jsx";
 import AccountSettings from "./Pages/Settings/AccountSettings.jsx";
 import PricingCheckout from "./Pages/Settings/Pricingcheckout.jsx";
+import WorkspaceAdmin from "./Pages/Settings/Workspaceadmin.jsx";
 
 const NotFound = () => (
   <div className="flex min-h-screen items-center justify-center text-3xl font-bold text-text">
@@ -55,6 +56,7 @@ createRoot(document.getElementById("root")).render(
           <Route path="/responses" element={<Responses />} />
           <Route path="/shortener" element={<UrlShortener />} />
           <Route path="/account-settings" element={<AccountSettings />} />
+          <Route path="/admin" element={<WorkspaceAdmin />} />
 
         </Route>
 
