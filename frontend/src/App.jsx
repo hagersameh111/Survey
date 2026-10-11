@@ -13,7 +13,7 @@ import Pricing from "./Pages/Auth/Pricing.jsx";
 // 2. Dashboard & Shared Layout Imports
 import Layout from "./components/layout/Layout";
 import Dashboard from "./Pages/Dashboard/Dashboard.jsx";
-import FolderPage from "./Pages/Dashboard/FolderPage.jsx";
+import Folderpage from "./Pages/Dashboard/Folderpage.jsx";
 import { DEFAULT_FOLDER } from "./config/folders";
 import Responses from "./Pages/Responses/Responses.jsx";
 import UrlShortener from "./Pages/UrlShortener/UrlShortener.jsx";
@@ -51,7 +51,7 @@ const App = () => (
         {/* Dashboard = sidebar + <Outlet/>; each sidebar tab is a child route */}
         <Route path="/dashboard" element={<Dashboard />}>
           <Route index element={<Navigate to={`/dashboard/${DEFAULT_FOLDER}`} replace />} />
-          <Route path=":folderSlug" element={<FolderPage />} />
+          <Route path=":folderSlug" element={<Folderpage/>} />
         </Route>
 
         <Route path="/responses" element={<Responses />} />
