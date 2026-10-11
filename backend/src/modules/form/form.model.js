@@ -111,6 +111,13 @@ const formSchema = new mongoose.Schema(
       default: "draft",
     },
 
+    folder: {
+      type: String,
+      trim: true,
+      default: "my-workspace",
+      index: true,
+    },
+
     settings: {
       type: mongoose.Schema.Types.Mixed,
       default: {},

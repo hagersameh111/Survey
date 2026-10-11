@@ -1,10 +1,9 @@
 import { GripVertical, Trash2, Circle, ChevronDown, Plus } from "lucide-react";
 
-const MultipleChoiceCard = ({ index = 1 }) => {
-  const options = ["Option 1", "Option 2", "Option 3"];
+const MultipleChoiceCard = ({ id, index = 1, title = "", description = "", options = [{ label: "Option 1" }], onChange = () => {}, onDelete, onAddOption, onDeleteOption }) => {
 
   return (
-    <div className="rounded-2xl border-2 border-primary bg-white p-6 shadow-sm">
+    <div id={id} className="rounded-2xl border-2 border-primary bg-white p-6 shadow-sm">
       
       {/* Card Header / Question Title */}
       <div className="flex items-start gap-4">
@@ -17,19 +16,23 @@ const MultipleChoiceCard = ({ index = 1 }) => {
         <div className="flex-1">
           <input
             type="text"
+            value={title}
+            onChange={(event) => onChange({ title: event.target.value })}
             placeholder="Question text..."
             className="w-full bg-transparent text-lg font-medium text-text outline-none placeholder:text-text-muted"
           />
           <input
             type="text"
+            value={description}
+            onChange={(event) => onChange({ description: event.target.value })}
             placeholder="Description (optional)"
             className="mt-1 w-full bg-transparent text-sm text-text-secondary outline-none placeholder:text-border"
           />
         </div>
 
         <div className="flex items-center gap-3 text-text-muted">
-          <button className="hover:text-text"><ChevronDown size={20} /></button>
-          <button className="hover:text-red-500"><Trash2 size={20} /></button>
+          <ChevronDown size={20} aria-hidden="true" />
+          <button type="button" onClick={onDelete} className="hover:text-red-500"><Trash2 size={20} /></button>
         </div>
       </div>
 
@@ -41,11 +44,12 @@ const MultipleChoiceCard = ({ index = 1 }) => {
             
             <input
               type="text"
-              defaultValue={option}
+              value={option.label || ""}
+              onChange={(event) => onChange({ options: options.map((item, optionIndex) => optionIndex === idx ? { ...item, label: event.target.value } : item) })}
               className="flex-1 rounded-xl border border-border bg-[#F8FAFF] px-4 py-3 text-text-secondary outline-none transition focus:border-primary focus:bg-white"
             />
             
-            <button className="text-text-muted hover:text-red-500">
+            <button type="button" onClick={() => onDeleteOption(idx)} className="text-text-muted hover:text-red-500" aria-label={`Remove option ${idx + 1}`}>
               <Trash2 size={18} />
             </button>
           </div>
@@ -54,7 +58,7 @@ const MultipleChoiceCard = ({ index = 1 }) => {
         {/* Add Option Button */}
         <div className="flex items-center gap-4 pt-2">
           <Plus size={20} className="text-primary" />
-          <button className="font-medium text-primary hover:underline">
+          <button type="button" onClick={onAddOption} className="font-medium text-primary hover:underline">
             Add option
           </button>
         </div>

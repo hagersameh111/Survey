@@ -3,12 +3,13 @@ import Form from "./form.model.js";
 
 
 export const createForm = async (userId, formData) => {
-  const { title, description } = formData;
+  const { title, description, folder } = formData;
 
   const form = await Form.create({
     owner: userId,
     title,
     description,
+    folder: folder || "my-workspace",
     status: "draft",
   });
 
@@ -28,6 +29,16 @@ export const getFormById = async (formId, userId) => {
   return form;
 };
 
+export const listForms = async (userId, { folder, sort = "updatedAt", order = "desc" } = {}) => {
+  const filter = { owner: userId };
+  if (folder === "drafts") filter.status = "draft";
+  else if (folder && folder !== "my-workspace") filter.folder = folder;
+
+  const sortField = ({ created_at: "createdAt", updated_at: "updatedAt", title: "title" })[sort] || "updatedAt";
+  const sortOrder = order === "asc" ? 1 : -1;
+  return Form.find(filter).sort({ [sortField]: sortOrder }).lean();
+};
+
 export const updateForm = async (formId, userId, formData) => {
   const form = await Form.findOne({
     _id: formId,
@@ -44,6 +55,18 @@ export const updateForm = async (formId, userId, formData) => {
 
   if (formData.description !== undefined) {
     form.description = formData.description;
+  }
+
+  if (formData.status !== undefined) {
+    form.status = formData.status;
+  }
+
+  if (formData.settings !== undefined) {
+    form.settings = formData.settings;
+  }
+
+  if (formData.folder !== undefined) {
+    form.folder = formData.folder;
   }
 
   await form.save();

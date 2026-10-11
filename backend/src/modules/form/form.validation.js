@@ -22,6 +22,7 @@ const imageDataSchema = z.object({
 const dividerDataSchema = z.object({});
 
 const shortTextDataSchema = z.object({
+  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -40,6 +41,7 @@ const longTextDataSchema = z.object({
 });
 
 const emailDataSchema = z.object({
+  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -47,6 +49,7 @@ const emailDataSchema = z.object({
 });
 
 const phoneDataSchema = z.object({
+  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -63,6 +66,7 @@ const numberDataSchema = z.object({
 });
 
 const dateDataSchema = z.object({
+  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -317,6 +321,23 @@ const saveBlockSchema = z.discriminatedUnion("type", [
   saveRatingBlockSchema,
 ]);
 
+const saveBlockRequestSchema = z.discriminatedUnion("type", [
+  saveHeadingBlockSchema.extend({ id: z.string().optional() }),
+  saveTextBlockSchema.extend({ id: z.string().optional() }),
+  saveImageBlockSchema.extend({ id: z.string().optional() }),
+  saveDividerBlockSchema.extend({ id: z.string().optional() }),
+  saveShortTextBlockSchema.extend({ id: z.string().optional() }),
+  saveLongTextBlockSchema.extend({ id: z.string().optional() }),
+  saveEmailBlockSchema.extend({ id: z.string().optional() }),
+  savePhoneBlockSchema.extend({ id: z.string().optional() }),
+  saveNumberBlockSchema.extend({ id: z.string().optional() }),
+  saveDateBlockSchema.extend({ id: z.string().optional() }),
+  saveSingleChoiceBlockSchema.extend({ id: z.string().optional() }),
+  saveMultipleChoiceBlockSchema.extend({ id: z.string().optional() }),
+  saveDropdownBlockSchema.extend({ id: z.string().optional() }),
+  saveRatingBlockSchema.extend({ id: z.string().optional() }),
+]);
+
 /*
 |--------------------------------------------------------------------------
 | Page Schema - Database
@@ -360,13 +381,7 @@ const savePageSchema = z.object({
 
   description: z.string().trim().max(1000).optional(),
 
-  blocks: z.array(
-    z.object({
-      id: z.string().optional(),
-      type: z.string(),
-      data: z.any(),
-    })
-  ).default([]),
+  blocks: z.array(saveBlockRequestSchema).default([]),
 });
 
 /*
@@ -387,6 +402,8 @@ export const createFormSchema = z.object({
     .trim()
     .max(1000, "Description must be at most 1000 characters")
     .optional(),
+
+  folder: z.string().trim().min(1).max(100).optional(),
 });
 
 /*
@@ -408,6 +425,12 @@ export const updateFormSchema = z.object({
     .trim()
     .max(1000, "Description must be at most 1000 characters")
     .optional(),
+
+  status: z.enum(["draft", "published", "closed"]).optional(),
+
+  settings: z.record(z.string(), z.unknown()).optional(),
+
+  folder: z.string().trim().min(1).max(100).optional(),
 });
 
 /*

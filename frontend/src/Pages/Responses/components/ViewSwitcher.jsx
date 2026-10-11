@@ -1,41 +1,24 @@
-import {
-  List,
-  Grid2X2,
-} from "lucide-react";
+import { List, Grid2X2 } from "lucide-react";
 
-const ViewSwitcher = ({
-  view,
-  setView,
-}) => {
-  return (
-    <div className="flex overflow-hidden rounded-xl border border-border">
+const Tab = ({ active, onClick, icon: Icon, label }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    aria-pressed={active}
+    className={`flex h-10 items-center gap-2 px-4 text-sm transition ${
+      active ? "bg-primary-light text-primary" : "text-text-secondary hover:bg-background"
+    }`}
+  >
+    <Icon size={18} />
+    {label}
+  </button>
+);
 
-      <button
-        onClick={() => setView("list")}
-        className={`flex items-center gap-2 px-5 py-3 transition ${
-          view === "list"
-            ? "bg-primary-light text-primary"
-            : "bg-surface text-text-secondary hover:bg-background"
-        }`}
-      >
-        <List size={18} />
-        List
-      </button>
-
-      <button
-        onClick={() => setView("grid")}
-        className={`flex items-center gap-2 border-l border-border px-5 py-3 transition ${
-          view === "grid"
-            ? "bg-primary-light text-primary"
-            : "bg-surface text-text-secondary hover:bg-background"
-        }`}
-      >
-        <Grid2X2 size={18} />
-        Grid
-      </button>
-
-    </div>
-  );
-};
+const ViewSwitcher = ({ view, setView }) => (
+  <div className="flex overflow-hidden rounded-xl border border-border bg-white">
+    <Tab active={view === "list"} onClick={() => setView("list")} icon={List} label="List" />
+    <Tab active={view === "grid"} onClick={() => setView("grid")} icon={Grid2X2} label="Grid" />
+  </div>
+);
 
 export default ViewSwitcher;

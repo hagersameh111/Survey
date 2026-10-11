@@ -1,18 +1,16 @@
-import { Save } from "lucide-react";
-
-const SaveButton = ({
-  onClick,
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className="flex h-14 items-center gap-2 rounded-xl bg-primary px-6 font-medium text-white transition hover:bg-primary-hover"
-    >
-      <Save size={18} />
-
-      Save
-    </button>
-  );
-};
+const SaveButton = ({ onClick, disabled }) => (
+  <button
+    type="button"
+    onClick={onClick}
+    disabled={disabled}
+    className={`h-12 w-12 shrink-0 rounded-xl text-sm font-medium transition ${
+      disabled
+        ? "cursor-not-allowed bg-background text-text-muted/70"
+        : "bg-primary text-white hover:bg-primary-hover"
+    }`}
+  >
+    Save
+  </button>
+);
 
 export default SaveButton;

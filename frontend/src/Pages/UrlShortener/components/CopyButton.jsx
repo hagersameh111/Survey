@@ -1,17 +1,26 @@
-import { Copy } from "lucide-react";
+import { useState } from "react";
+import { Check, Copy } from "lucide-react";
 
-const CopyButton = ({
-  onClick,
-}) => {
+const CopyButton = ({ text, disabled }) => {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  };
+
   return (
     <button
-      onClick={onClick}
-      className="flex h-14 w-14 items-center justify-center rounded-xl border border-border bg-surface transition hover:bg-background"
+      type="button"
+      onClick={copy}
+      disabled={disabled}
+      aria-label="Copy link"
+      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background transition ${
+        disabled ? "cursor-not-allowed text-text-muted/60" : "text-text hover:bg-primary-light hover:text-primary"
+      }`}
     >
-      <Copy
-        size={18}
-        className="text-text-secondary"
-      />
+      {copied ? <Check size={16} className="text-primary" /> : <Copy size={16} />}
     </button>
   );
 };

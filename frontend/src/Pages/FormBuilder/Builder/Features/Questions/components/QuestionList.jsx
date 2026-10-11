@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { ChevronDown, ChevronRight, LayoutList, Trash2 } from "lucide-react";
 
-const QuestionList = ({ questions = [], onDeleteQuestion }) => {
+const QuestionList = ({ questions = [], selectedQuestionId, onDeleteQuestion, onSelectQuestion }) => {
   // Set to true so the list is collapsed by default
   const [isCollapsed, setIsCollapsed] = useState(true);
 
@@ -30,18 +30,21 @@ const QuestionList = ({ questions = [], onDeleteQuestion }) => {
             questions.map((q, index) => (
               <div 
                 key={q.id} 
-                className="group flex items-center justify-between rounded-2xl bg-[#F4F8FF] px-4 py-3 transition hover:bg-white border-2 border-transparent hover:border-primary/20 shadow-xs"
+                onClick={() => onSelectQuestion(q.id)}
+                className={`group flex cursor-pointer items-center justify-between rounded-2xl px-4 py-3 transition border-2 shadow-xs ${selectedQuestionId === q.id ? "border-primary/40 bg-white" : "border-transparent bg-[#F4F8FF] hover:border-primary/20 hover:bg-white"}`}
               >
                 <span className="truncate text-sm font-medium text-text">
                   {index + 1}. {q.title || "Untitled Question"}
                 </span>
                 
                 <button 
+                  type="button"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDeleteQuestion && onDeleteQuestion(q.id);
                   }}
                   className="text-text-muted opacity-0 transition group-hover:opacity-100 hover:text-red-500"
+                  aria-label={`Delete question ${index + 1}`}
                 >
                   <Trash2 size={16} />
                 </button>

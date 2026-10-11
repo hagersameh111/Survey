@@ -8,7 +8,7 @@ const WelcomeSidebar = () => {
   const [contactDetails, setContactDetails] = useState(true);
 
   return (
-    <aside className="w-[300px] flex-shrink-0 overflow-y-auto rounded-3xl bg-[#F8FAFD] p-6 shadow-sm scrollbar-hide">
+    <aside className="w-full flex-shrink-0 overflow-y-auto rounded-3xl bg-[#F8FAFD] p-4 shadow-sm scrollbar-hide sm:p-6 lg:w-[300px]">
       <div className="mb-6">
         <h3 className="mb-3 text-sm font-semibold text-text">Answer</h3>
         <button className="flex w-full items-center justify-between rounded-xl border border-border bg-white px-4 py-2.5 text-sm font-medium text-text transition hover:border-primary">

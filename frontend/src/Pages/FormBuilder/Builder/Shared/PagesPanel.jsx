@@ -16,7 +16,7 @@ const PagesPanel = ({ activePage, onSelectPage }) => {
         />
       </PageSection>
 
-      <PageSection title="Participant Bio" showAdd>
+      <PageSection title="Participant Bio">
         <PageItem
           icon={User}
           title="Participant Bio"
@@ -33,7 +33,7 @@ const PagesPanel = ({ activePage, onSelectPage }) => {
         </div>
       </PageSection>
 
-      <PageSection title="Finish Page" showAdd>
+      <PageSection title="Finish Page">
         <PageItem
           icon={CheckCircle}
           title="Finish Page"

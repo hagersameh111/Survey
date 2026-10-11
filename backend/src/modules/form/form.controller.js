@@ -4,7 +4,17 @@ import {
   updateForm,
   addPage,
   saveBuilder as saveBuilderService,
+  listForms,
 } from "./form.service.js";
+
+export const list = async (req, res) => {
+  try {
+    const forms = await listForms(req.user.id, req.query);
+    return res.status(200).json({ success: true, data: forms });
+  } catch (error) {
+    return res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export const create = async (req, res) => {
   try {

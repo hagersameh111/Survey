@@ -1,23 +1,24 @@
 import { useState } from "react";
-import UrlToolbar from "./components/UrlToolbar";
+import UrlShortenerHeader from "./components/UrlShortenerHeader";
 import UrlList from "./components/UrlList";
 
 const UrlShortener = () => {
   const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("recent");
+  const [sort, setSort] = useState("recent");
 
   return (
-    <main>
-      <UrlToolbar
+    <div className="min-w-0 rounded-2xl bg-surface p-4 shadow-sm sm:p-6 lg:p-8">
+      <UrlShortenerHeader
         search={search}
-        setSearch={setSearch}
-        sortBy={sortBy}
-        setSortBy={setSortBy}
+        onSearchChange={setSearch}
+        sort={sort}
+        onSortChange={setSort}
       />
-      <div className="mt-8">
-        <UrlList />
+      <div className="mt-5 h-px bg-divider" />
+      <div className="mt-6">
+        <UrlList search={search} sort={sort} />
       </div>
-    </main>
+    </div>
   );
 };
 

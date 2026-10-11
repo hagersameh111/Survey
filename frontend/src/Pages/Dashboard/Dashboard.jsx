@@ -1,21 +1,16 @@
-import { useState } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
-import DashboardHeader from "./components/DashboardHeader";
-import WorkspaceEmpty from "./components/WorkspaceEmpty";
-import WorkspaceGrid from "./components/WorkspaceGrid";
+import useFolders from "../../hooks/useFolders";
 
+// Layout: sidebar stays, the selected folder page renders in <Outlet />
 const Dashboard = () => {
-  // Toggle this state or tie it to your workspace mock data count
-  const [hasForms, setHasForms] = useState(true); 
+  const { folders, stats, refresh } = useFolders();
 
   return (
-    <div className="flex gap-6">
-      <Sidebar />
-      
-      <main className="flex-1 rounded-2xl bg-surface p-8 shadow-sm">
-        <DashboardHeader />
-        
-        {hasForms ? <WorkspaceGrid /> : <WorkspaceEmpty />}
+    <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:gap-6">
+      <Sidebar folders={folders} stats={stats} />
+      <main className="min-w-0 flex-1 rounded-2xl bg-surface p-4 shadow-sm sm:p-6 lg:p-8">
+        <Outlet context={{ folders, refreshFolders: refresh }} />
       </main>
     </div>
   );

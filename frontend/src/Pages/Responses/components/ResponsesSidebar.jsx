@@ -1,95 +1,50 @@
-import { useState } from "react";
 import { Plus } from "lucide-react";
 
 import SearchInput from "./SearchInput";
 import ResponseFilterItem from "./ResponseFilterItem";
 import ResponsesProgress from "./ResponsesProgress";
 
-const filters = [
-  {
-    id: "all",
-    title: "All",
-    count: 9,
-  },
-  {
-    id: "completed",
-    title: "Completed",
-    count: 3,
-  },
-  {
-    id: "recent",
-    title: "Recent",
-    count: 6,
-  },
-  {
-    id: "rated",
-    title: "Rated",
-    count: 0,
-  },
-];
-
 const ResponsesSidebar = ({
+  filters,
+  counts,
+  active,
+  onFilterChange,
+  search,
+  onSearchChange,
+  collected,
+  limit,
   onCreateForm,
-}) => {
-  const [search, setSearch] = useState("");
-  const [active, setActive] =
-    useState("all");
+}) => (
+  <aside className="w-full shrink-0 self-start overflow-hidden rounded-2xl bg-surface shadow-sm lg:w-72">
+    <div className="border-b border-divider p-5">
+      <button
+        type="button"
+        onClick={onCreateForm}
+        className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary font-medium text-white transition hover:bg-primary-hover"
+      >
+        <Plus size={20} />
+        Create form
+      </button>
+    </div>
 
-  return (
-    <aside className="w-72 overflow-hidden rounded-2xl bg-[#EAF0FF] shadow-sm">
+    <div className="border-b border-divider">
+      <SearchInput value={search} onChange={onSearchChange} />
+    </div>
 
-      {/* Create */}
+    <nav className="space-y-2 px-4 py-6" aria-label="Response filters">
+      {filters.map((f) => (
+        <ResponseFilterItem
+          key={f.id}
+          active={active === f.id}
+          title={f.title}
+          count={counts[f.id] ?? 0}
+          onClick={() => onFilterChange(f.id)}
+        />
+      ))}
+    </nav>
 
-      <div className="border-b border-border p-5">
-
-        <button
-          onClick={onCreateForm}
-          className="flex h-14 w-full items-center justify-center gap-3 rounded-xl bg-primary text-lg font-medium text-white"
-        >
-          <Plus size={22} />
-
-          Create form
-
-        </button>
-
-      </div>
-
-      {/* Search */}
-
-      <SearchInput
-        value={search}
-        onChange={setSearch}
-      />
-
-      <div className="border-t border-border p-4">
-
-        <div className="space-y-2">
-
-          {filters.map((filter) => (
-            <ResponseFilterItem
-              key={filter.id}
-              active={
-                active === filter.id
-              }
-              title={filter.title}
-              count={filter.count}
-              onClick={() =>
-                setActive(filter.id)
-              }
-            />
-          ))}
-
-        </div>
-
-      </div>
-
-      <ResponsesProgress
-        collected={0}
-        limit={100}
-      />
-
-    </aside>
-  );
-};
+    <ResponsesProgress collected={collected} limit={limit} />
+  </aside>
+);
 
 export default ResponsesSidebar;

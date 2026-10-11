@@ -2,22 +2,10 @@ import { useState } from "react";
 import { X, Settings, Globe, Shield, Bell } from "lucide-react";
 import SwitchToggle from "./SwitchToggle";
 
-const FormSettingsModal = ({ open, onClose }) => {
+const FormSettingsModal = ({ open, onClose, settings = {}, onChange = () => {}, onSave = () => {} }) => {
   const [activeTab, setActiveTab] = useState("general");
-  const [settings, setSettings] = useState({
-    formTitle: "Service Evaluation Form",
-    formSlug: "service-evaluation-form",
-    language: "English",
-    emailNotifications: true,
-    collectEmails: true,
-    limitOneResponse: false,
-  });
 
   if (!open) return null;
-
-  const handleChange = (field, value) => {
-    setSettings((prev) => ({ ...prev, [field]: value }));
-  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -81,8 +69,9 @@ const FormSettingsModal = ({ open, onClose }) => {
                   <label className="mb-2 block text-sm font-medium text-text">Form Title</label>
                   <input
                     type="text"
-                    value={settings.formTitle}
-                    onChange={(e) => handleChange("formTitle", e.target.value)}
+                    value={settings.formTitle || ""}
+                    maxLength={200}
+                    onChange={(e) => onChange("formTitle", e.target.value)}
                     className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none transition focus:border-primary"
                   />
                 </div>
@@ -91,8 +80,8 @@ const FormSettingsModal = ({ open, onClose }) => {
                   <label className="mb-2 block text-sm font-medium text-text">Form URL Slug</label>
                   <input
                     type="text"
-                    value={settings.formSlug}
-                    onChange={(e) => handleChange("formSlug", e.target.value)}
+                    value={settings.formSlug || ""}
+                    onChange={(e) => onChange("formSlug", e.target.value)}
                     className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none transition focus:border-primary"
                   />
                 </div>
@@ -100,8 +89,8 @@ const FormSettingsModal = ({ open, onClose }) => {
                 <div>
                   <label className="mb-2 block text-sm font-medium text-text">Language</label>
                   <select
-                    value={settings.language}
-                    onChange={(e) => handleChange("language", e.target.value)}
+                    value={settings.language || "English"}
+                    onChange={(e) => onChange("language", e.target.value)}
                     className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none transition focus:border-primary"
                   >
                     <option value="English">English</option>
@@ -109,6 +98,32 @@ const FormSettingsModal = ({ open, onClose }) => {
                     <option value="Spanish">Spanish</option>
                     <option value="French">French</option>
                   </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text">Form Status</label>
+                  <select value={settings.status || "draft"} onChange={(e) => onChange("status", e.target.value)} className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none focus:border-primary">
+                    <option value="draft">Draft</option>
+                    <option value="published">Published</option>
+                    <option value="closed">Closed</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text">Theme color</label>
+                  <input type="color" value={settings.themeColor || "#2563EB"} onChange={(e) => onChange("themeColor", e.target.value)} className="h-11 w-full rounded-xl border border-border bg-background p-2" />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text">Card style</label>
+                  <select value={settings.cardStyle || "rounded"} onChange={(e) => onChange("cardStyle", e.target.value)} className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text">
+                    <option value="rounded">Rounded</option><option value="sharp">Sharp</option>
+                  </select>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium text-text">Show progress bar</span>
+                  <SwitchToggle checked={Boolean(settings.progressBar)} onChange={(value) => onChange("progressBar", value)} />
                 </div>
               </>
             )}
@@ -121,8 +136,8 @@ const FormSettingsModal = ({ open, onClose }) => {
                     <p className="text-xs text-text-muted">Require respondents to enter their email</p>
                   </div>
                   <SwitchToggle
-                    checked={settings.collectEmails}
-                    onChange={(val) => handleChange("collectEmails", val)}
+                    checked={Boolean(settings.collectEmails)}
+                    onChange={(val) => onChange("collectEmails", val)}
                   />
                 </div>
 
@@ -132,8 +147,8 @@ const FormSettingsModal = ({ open, onClose }) => {
                     <p className="text-xs text-text-muted">Respondents must sign in to submit only once</p>
                   </div>
                   <SwitchToggle
-                    checked={settings.limitOneResponse}
-                    onChange={(val) => handleChange("limitOneResponse", val)}
+                    checked={Boolean(settings.limitOneResponse)}
+                    onChange={(val) => onChange("limitOneResponse", val)}
                   />
                 </div>
               </div>
@@ -147,8 +162,8 @@ const FormSettingsModal = ({ open, onClose }) => {
                     <p className="text-xs text-text-muted">Receive an email when a new response is submitted</p>
                   </div>
                   <SwitchToggle
-                    checked={settings.emailNotifications}
-                    onChange={(val) => handleChange("emailNotifications", val)}
+                    checked={Boolean(settings.emailNotifications)}
+                    onChange={(val) => onChange("emailNotifications", val)}
                   />
                 </div>
               </div>
@@ -166,7 +181,7 @@ const FormSettingsModal = ({ open, onClose }) => {
             Cancel
           </button>
           <button
-            onClick={onClose}
+            onClick={onSave}
             className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-hover"
           >
             Save Changes

@@ -1,12 +1,23 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { login } from "../../api/auth";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-  const handleLogin = (e) => {
+ const handleLogin = async (e) => {
     e.preventDefault();
+    setError("");
+    try {
+      const result = await login({ email, password });
+      localStorage.setItem("token", result.token);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Login failed");
+    }
   };
 
   return (
@@ -17,6 +28,7 @@ const Login = () => {
       </h2>
 
       <form onSubmit={handleLogin} className="space-y-5">
+        {error && <div role="alert" className="rounded-xl bg-red-50 p-3 text-sm text-red-600">{error}</div>}
         <div>
           <label className="mb-2 block text-sm font-medium text-gray-700">Email</label>
           <input
@@ -25,6 +37,7 @@ const Login = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3.5 text-sm outline-none transition focus:border-blue-600 focus:bg-white"
+            required
           />
         </div>
 
@@ -36,6 +49,7 @@ const Login = () => {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-xl border border-gray-200 bg-gray-50 p-3.5 text-sm outline-none transition focus:border-blue-600 focus:bg-white"
+            required
           />
         </div>
 
@@ -53,9 +67,7 @@ const Login = () => {
           type="submit"
           className="w-full rounded-xl bg-blue-600 py-3.5 text-sm font-medium text-white transition hover:bg-blue-700 shadow-sm"
         >
-          <Link to="/dashboard" className="w-full text-center">
           Login
-          </Link>
         </button>
       </form>
 

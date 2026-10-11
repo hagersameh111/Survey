@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, Copy, Eye, Settings } from "lucide-react";
 import FormSettingsModal from "../Shared/FormSettingsModal";
 
-const BuilderToolbar = ({ onAddQuestion }) => {
+const BuilderToolbar = ({ onAddQuestion, onDuplicate, onPreview, settings, onSettingsChange, onSaveSettings }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
@@ -17,13 +17,13 @@ const BuilderToolbar = ({ onAddQuestion }) => {
             Add Question
           </button>
 
-          <button className="rounded-xl border border-border p-3 hover:bg-white transition text-text-secondary">
+          <button type="button" onClick={onDuplicate} aria-label="Duplicate form" className="rounded-xl border border-border p-3 hover:bg-white transition text-text-secondary">
             <Copy size={18} />
           </button>
         </div>
 
         <div className="flex gap-3">
-          <button className="rounded-xl border border-border p-3 hover:bg-white transition text-text-secondary">
+          <button type="button" onClick={onPreview} aria-label="Preview form" className="rounded-xl border border-border p-3 hover:bg-white transition text-text-secondary">
             <Eye size={18} />
           </button>
 
@@ -39,6 +39,12 @@ const BuilderToolbar = ({ onAddQuestion }) => {
       <FormSettingsModal
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
+        settings={settings}
+        onChange={onSettingsChange}
+        onSave={async () => {
+          const saved = await onSaveSettings();
+          if (saved) setSettingsOpen(false);
+        }}
       />
     </>
   );

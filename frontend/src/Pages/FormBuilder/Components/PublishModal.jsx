@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { X, Copy, Check, Globe, Code, Share2 } from "lucide-react";
 
-const PublishModal = ({ open, onClose, formUrl = "https://forms.formhub.com/to/service-evaluation" }) => {
-  const [copied, setCopied] = useState(false);
+const PublishModal = ({ open, onClose, formUrl = `${window.location.origin}/view` }) => {
+  const [copied, setCopied] = useState("");
 
   if (!open) return null;
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(formUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const copy = async (value, label) => {
+    await navigator.clipboard.writeText(value);
+    setCopied(label);
+    setTimeout(() => setCopied(""), 2000);
   };
+
+  const handleShare = async () => {
+    if (navigator.share) await navigator.share({ title: "FormHub survey", url: formUrl });
+    else await copy(formUrl, "link");
+  };
+
+  const embedCode = `<iframe src="${formUrl}" title="FormHub survey" width="100%" height="700" frameborder="0"></iframe>`;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
@@ -46,34 +53,34 @@ const PublishModal = ({ open, onClose, formUrl = "https://forms.formhub.com/to/s
                 className="flex-1 bg-transparent px-4 py-3 text-sm text-text outline-none"
               />
               <button
-                onClick={handleCopy}
+                onClick={() => copy(formUrl, "link")}
                 className="flex items-center gap-2 bg-primary px-5 py-3 font-medium text-white transition hover:bg-primary-hover"
               >
-                {copied ? <Check size={18} /> : <Copy size={18} />}
-                <span>{copied ? "Copied!" : "Copy"}</span>
+                {copied === "link" ? <Check size={18} /> : <Copy size={18} />}
+                <span>{copied === "link" ? "Copied!" : "Copy"}</span>
               </button>
             </div>
           </div>
 
           {/* Share Options */}
           <div className="grid grid-cols-2 gap-4">
-            <button className="flex items-center gap-3 rounded-2xl border border-border p-4 transition hover:border-primary hover:bg-primary-light/20 text-left">
+            <button type="button" onClick={handleShare} className="flex items-center gap-3 rounded-2xl border border-border p-4 transition hover:border-primary hover:bg-primary-light/20 text-left">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background text-primary">
                 <Share2 size={18} />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-text">Share Link</h4>
-                <p className="text-xs text-text-muted">Send via email or social</p>
+                <p className="text-xs text-text-muted">{copied === "link" ? "Link copied" : "Send via email or social"}</p>
               </div>
             </button>
 
-            <button className="flex items-center gap-3 rounded-2xl border border-border p-4 transition hover:border-primary hover:bg-primary-light/20 text-left">
+            <button type="button" onClick={() => copy(embedCode, "embed")} className="flex items-center gap-3 rounded-2xl border border-border p-4 transition hover:border-primary hover:bg-primary-light/20 text-left">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-background text-primary">
                 <Code size={18} />
               </div>
               <div>
                 <h4 className="text-sm font-semibold text-text">Embed Code</h4>
-                <p className="text-xs text-text-muted">Add to your website</p>
+                <p className="text-xs text-text-muted">{copied === "embed" ? "Embed code copied" : "Copy embed code"}</p>
               </div>
             </button>
           </div>

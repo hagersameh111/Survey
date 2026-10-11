@@ -1,20 +1,12 @@
-const ResponseAvatar = ({
-  avatar,
-  name,
-}) => {
-  return (
-    <div className="flex items-center gap-3">
-      <img
-        src={avatar}
-        alt={name}
-        className="h-11 w-11 rounded-xl object-cover"
-      />
-
-      <span className="font-medium text-text">
-        {name}
-      </span>
-    </div>
-  );
-};
+const ResponseAvatar = ({ avatar, name }) => (
+  <div className="flex min-w-0 items-center gap-3">
+    {avatar ? (
+      <img src={avatar} alt="" className="h-8 w-8 shrink-0 rounded-lg object-cover" />
+    ) : (
+      <div className="h-8 w-8 shrink-0 rounded-lg bg-primary" aria-hidden="true" />
+    )}
+    <span className="truncate text-text">{name}</span>
+  </div>
+);
 
 export default ResponseAvatar;

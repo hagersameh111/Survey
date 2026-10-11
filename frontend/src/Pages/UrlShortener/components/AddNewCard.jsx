@@ -1,24 +1,12 @@
-const AddNewCard = ({
-  title,
-  description,
-  onClick,
-}) => {
-  return (
-    <button
-      onClick={onClick}
-      className="w-72 rounded-3xl border border-border bg-surface p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:border-primary hover:shadow-lg"
-    >
-      <h3 className="mb-6 text-2xl font-semibold text-text">
-        {title}
-      </h3>
-
-      <div className="mb-6 border-b border-border" />
-
-      <p className="text-lg text-text-secondary">
-        {description}
-      </p>
-    </button>
-  );
-};
+const AddNewCard = ({ title, onClick }) => (
+  <button
+    type="button"
+    role="menuitem"
+    onClick={onClick}
+    className="block w-full rounded-xl px-4 py-3 text-left text-sm text-text transition hover:bg-background"
+  >
+    {title}
+  </button>
+);
 
 export default AddNewCard;

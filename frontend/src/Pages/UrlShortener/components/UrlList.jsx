@@ -1,123 +1,119 @@
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import UrlRow from "./UrlRow";
-import CopyButton from "./CopyButton";
-import ExpirationPicker from "./ExpirationPicker";
-import QRCodeButton from "./QRCodeButton";
-import SaveButton from "./SaveButton";
+import FileRow from "./FileRow";
 import AddNewButton from "./AddNewButton";
 import AddNewMenu from "./AddNewMenu";
-import QRModal from "./QRModal";
-import FileGeneratorList from "./FileGeneratorList";
+import QRModal from "./QRModal"; // your existing modal, unchanged
 
-const createRow = () => ({
-  id: Date.now() + Math.random(),
-  expiration: "",
-  shortUrl: "https://form.formhub.com/to/INYXidiE",
+const newId = () => crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`;
+
+const createRow = (type) => ({
+  id: newId(),
+  type, // "url" | "file"
+  longUrl: "",
+  file: null,
+  shortUrl: "",
+  active: false,
+  expiration: "", // yyyy-mm-dd
+  createdAt: Date.now(),
 });
 
-const UrlList = () => {
-  const [rows, setRows] = useState([createRow()]);
+const labelOf = (r) => (r.type === "file" ? r.file?.name : r.longUrl) ?? "";
+
+const UrlList = ({ search = "", sort = "recent" }) => {
+  const [rows, setRows] = useState(() => [createRow("url"), createRow("file")]);
   const [showMenu, setShowMenu] = useState(false);
-  
-  // State to track whether we are viewing URLs or the File Link Generator
-  const [activeView, setActiveView] = useState("urls"); // 'urls' or 'files'
+  const [qrUrl, setQrUrl] = useState(null);
+  const menuRef = useRef(null);
 
-  const [qrOpen, setQrOpen] = useState(false);
-  const [selectedUrl, setSelectedUrl] = useState("");
+  // Close the Add New menu on outside click / Esc
+  useEffect(() => {
+    const onClick = (e) => menuRef.current && !menuRef.current.contains(e.target) && setShowMenu(false);
+    const onKey = (e) => e.key === "Escape" && setShowMenu(false);
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
-  const addUrlRow = () => {
-    setActiveView("urls"); // switch back to URL list if adding a URL row
-    setRows((prev) => [...prev, createRow()]);
+  const update = (id, patch) =>
+    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch } : r)));
+
+  const swap = (id) =>
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === id
+          ? { ...r, type: r.type === "url" ? "file" : "url", longUrl: "", file: null, shortUrl: "", active: false }
+          : r
+      )
+    );
+
+  const add = (type) => {
+    setRows((prev) => [...prev, createRow(type)]);
     setShowMenu(false);
   };
 
-  const handleFileGenerator = () => {
-    setActiveView("files"); // switch view to File Generator list
-    setShowMenu(false);
+  const handleShorten = (row) => {
+    // TODO: call your backend with row.longUrl (or row.file), then:
+    // update(row.id, { shortUrl: data.shortUrl, active: true });
+    console.log("Shorten:", row.type === "file" ? row.file : row.longUrl);
   };
 
-  const openQR = (url) => {
-    setSelectedUrl(url);
-    setQrOpen(true);
+  const handleSave = (row) => {
+    // TODO: persist { shortUrl, active, expiration } to your backend
+    console.log("Save row:", row);
   };
+
+  // Search + sort. Finished links are sorted; empty drafts stay at the bottom so typing never reorders them.
+  const visible = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const filtered = rows.filter(
+      (r) => !q || [labelOf(r), r.shortUrl].some((s) => s?.toLowerCase().includes(q))
+    );
+    const done = filtered.filter((r) => r.shortUrl);
+    const drafts = filtered.filter((r) => !r.shortUrl);
+    const compare = {
+      recent: (a, b) => b.createdAt - a.createdAt,
+      oldest: (a, b) => a.createdAt - b.createdAt,
+      name: (a, b) => labelOf(a).localeCompare(labelOf(b)),
+    }[sort];
+    return [...(compare ? [...done].sort(compare) : done), ...drafts];
+  }, [rows, search, sort]);
 
   return (
-    <div className="relative">
-      
-      {/* Conditionally render URL Rows list or File Generator view */}
-      {activeView === "urls" ? (
-        <div className="space-y-6">
-          {rows.map((row) => (
-            <div
+    <div>
+      <div className="space-y-6">
+        {visible.map((row) => {
+          const Row = row.type === "url" ? UrlRow : FileRow;
+          return (
+            <Row
               key={row.id}
-              className="flex items-center gap-3"
-            >
-              <UrlRow
-                row={row}
-                onShorten={(url) => {
-                  console.log("Shorten:", url);
-                }}
-              />
+              row={row}
+              onChange={(patch) => update(row.id, patch)}
+              onSwap={() => swap(row.id)}
+              onShorten={() => handleShorten(row)}
+              onQr={() => setQrUrl(row.shortUrl)}
+              onSave={() => handleSave(row)}
+            />
+          );
+        })}
+      </div>
 
-              <CopyButton
-                onClick={() => {
-                  navigator.clipboard.writeText(row.shortUrl);
-                }}
-              />
-
-              <ExpirationPicker
-                value={row.expiration}
-                onChange={(value) =>
-                  setRows((prev) =>
-                    prev.map((r) =>
-                      r.id === row.id
-                        ? {
-                            ...r,
-                            expiration: value,
-                          }
-                        : r
-                    )
-                  )
-                }
-              />
-
-              <QRCodeButton
-                onClick={() => openQR(row.shortUrl)}
-              />
-
-              <SaveButton
-                onClick={() => {
-                  console.log("Save Row", row);
-                }}
-              />
-            </div>
-          ))}
-        </div>
-      ) : (
-        <FileGeneratorList />
-      )}
-
-      {/* Add New Section */}
-      <div className="relative mt-6 inline-block">
-        <AddNewButton
-          onClick={() => setShowMenu((prev) => !prev)}
-        />
-
-        <div className="absolute left-0 top-12 z-40">
+      <div className="relative mt-6 inline-block" ref={menuRef}>
+        <AddNewButton open={showMenu} onClick={() => setShowMenu((o) => !o)} />
+        <div className="absolute left-0 top-full z-40 mt-3">
           <AddNewMenu
             open={showMenu}
-            onCreateUrl={addUrlRow}
-            onCreateFile={handleFileGenerator}
+            onCreateUrl={() => add("url")}
+            onCreateFile={() => add("file")}
           />
         </div>
       </div>
 
-      {/* QR Modal */}
-      <QRModal
-        open={qrOpen}
-        url={selectedUrl}
-        onClose={() => setQrOpen(false)}
-      />
+      <QRModal open={qrUrl !== null} url={qrUrl ?? ""} onClose={() => setQrUrl(null)} />
     </div>
   );
 };

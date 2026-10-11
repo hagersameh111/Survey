@@ -5,6 +5,7 @@ import {
   update,
   addPageToForm,
   saveBuilder,
+  list,
 } from "./form.controller.js";
 
 import { auth } from "../../middlewares/auth.middleware.js";
@@ -18,6 +19,8 @@ import {
 } from "./form.validation.js";
 
 const router = express.Router();
+
+router.get("/", auth, list);
 
 router.post(
   "/",

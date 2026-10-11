@@ -6,7 +6,7 @@ const Layout = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       {/* This simple wrapper allows each child page to define its own internal layout */}
-      <div className="p-6">
+      <div className="min-w-0 p-3 sm:p-4 lg:p-6">
         <Outlet /> 
       </div>
     </div>

@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { Plus, List as ListIcon, Type, CheckSquare, ChevronDown, AlignLeft, Star } from "lucide-react";
+import { Plus, List as ListIcon, Type, CheckSquare, ChevronDown, AlignLeft, Star, AtSign, Phone, Hash, CalendarDays, Circle, Heading1, FileText, Image as ImageIcon, Minus } from "lucide-react";
 import Breadcrumb from "../../Shared/Breadcrumb";
 import FormHeader from "../../Shared/FormHeader";
 import BuilderToolbar from "../../Shared/BuilderToolbar";
 import QuestionTypeCard from "./components/QuestionTypeCard";
 import MultipleChoiceCard from "./components/MultipleChoiceCard";
 import ShortAnswerCard from "./components/ShortAnswerCard";
+import RatingCard from "./components/RatingCard";
+import ContentBlockCard from "./components/ContentBlockCard";
 // Import remaining cards as needed
 
 const questionTypes = [
@@ -15,9 +17,18 @@ const questionTypes = [
   { id: "dropdown", title: "Dropdown", icon: ChevronDown, color: "bg-[#F4FAF8]" },
   { id: "paragraph", title: "Paragraph", icon: AlignLeft, color: "bg-[#FFF8F5]" },
   { id: "rating", title: "Star Rating", icon: Star, color: "bg-[#F9F6FD]" },
+  { id: "single-choice", title: "Single Choice", icon: Circle, color: "bg-[#FCFBF5]" },
+  { id: "email", title: "Email", icon: AtSign, color: "bg-[#F4F7FD]" },
+  { id: "phone", title: "Phone", icon: Phone, color: "bg-[#FCF6F7]" },
+  { id: "number", title: "Number", icon: Hash, color: "bg-[#F4FAF8]" },
+  { id: "date", title: "Date", icon: CalendarDays, color: "bg-[#FFF8F5]" },
+  { id: "heading", title: "Heading", icon: Heading1, color: "bg-[#F9F6FD]" },
+  { id: "text", title: "Text Block", icon: FileText, color: "bg-[#F4F7FD]" },
+  { id: "image", title: "Image", icon: ImageIcon, color: "bg-[#FCFBF5]" },
+  { id: "divider", title: "Divider", icon: Minus, color: "bg-[#F4FAF8]" },
 ];
 
-const QuestionsPage = ({ questions = [], onAddQuestion, onDeleteQuestion }) => {
+const QuestionsPage = ({ questions = [], page, onUpdatePage, settings, onSettingsChange, onSaveSettings, onAddQuestion, onDeleteQuestion, onUpdateQuestion, onMoveQuestion, onDuplicate, onPreview }) => {
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAdd = (type) => {
@@ -28,8 +39,8 @@ const QuestionsPage = ({ questions = [], onAddQuestion, onDeleteQuestion }) => {
   return (
     <main className="relative flex-1 rounded-2xl bg-surface p-8 shadow-sm">
       <Breadcrumb />
-      <FormHeader />
-      <BuilderToolbar onAddQuestion={() => setIsAdding(true)} />
+      <FormHeader title={page?.title} description={page?.description} onChange={onUpdatePage} />
+      <BuilderToolbar onAddQuestion={() => setIsAdding(true)} onDuplicate={onDuplicate} onPreview={onPreview} settings={settings} onSettingsChange={onSettingsChange} onSaveSettings={onSaveSettings} />
 
       {questions.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center rounded-2xl bg-[#F4F6F9] py-24">
@@ -46,7 +57,7 @@ const QuestionsPage = ({ questions = [], onAddQuestion, onDeleteQuestion }) => {
               Add Question
             </button>
           ) : (
-            <div className="mt-4 grid w-full max-w-[760px] grid-cols-3 gap-3 rounded-2xl border border-dashed border-border bg-white p-3 shadow-sm">
+            <div className="mt-4 grid w-full max-w-[760px] grid-cols-2 gap-3 rounded-2xl border border-dashed border-border bg-white p-3 shadow-sm sm:grid-cols-3">
               {questionTypes.map((q) => (
                 <QuestionTypeCard key={q.id} {...q} onClick={() => handleAdd(q.id)} />
               ))}
@@ -57,10 +68,25 @@ const QuestionsPage = ({ questions = [], onAddQuestion, onDeleteQuestion }) => {
         <div className="mt-8 space-y-6">
           {questions.map((q, index) => {
             const { id, type, ...restProps } = q;
-            const cardProps = { key: id, index: index + 1, onDelete: () => onDeleteQuestion(id), ...restProps };
+            const cardProps = {
+              key: id,
+              id: `question-${id}`,
+              index: index + 1,
+              onDelete: () => onDeleteQuestion(id),
+              onChange: (changes) => onUpdateQuestion(id, changes),
+              onAddOption: () => onUpdateQuestion(id, { options: [...(q.options || []), { label: `Option ${(q.options || []).length + 1}` }] }),
+              onDeleteOption: (optionIndex) => {
+                if ((q.options || []).length > 1) onUpdateQuestion(id, { options: q.options.filter((_, i) => i !== optionIndex) });
+              },
+              onMoveUp: () => onMoveQuestion?.(id, -1),
+              onMoveDown: () => onMoveQuestion?.(id, 1),
+              ...restProps,
+            };
 
-            if (type === "multiple" || type === "multiple-choice") return <MultipleChoiceCard {...cardProps} />;
-            if (type === "short" || type === "short-answer") return <ShortAnswerCard {...cardProps} />;
+            if (["heading", "text", "image", "divider"].includes(type)) return <ContentBlockCard {...cardProps} type={type} />;
+            if (["multiple", "multiple-choice", "single-choice", "checkbox", "dropdown"].includes(type)) return <MultipleChoiceCard {...cardProps} />;
+            if (["short", "short-answer", "paragraph", "email", "phone", "number", "date"].includes(type)) return <ShortAnswerCard {...cardProps} isParagraph={type === "paragraph"} inputType={type} />;
+            if (type === "rating") return <RatingCard {...cardProps} />;
             return null;
           })}
 
@@ -74,7 +100,7 @@ const QuestionsPage = ({ questions = [], onAddQuestion, onDeleteQuestion }) => {
             </button>
           ) : (
             <div className="mt-6 w-full rounded-2xl border border-dashed border-primary bg-white p-3 shadow-sm">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {questionTypes.map((q) => (
                   <QuestionTypeCard key={q.id} {...q} onClick={() => handleAdd(q.id)} />
                 ))}

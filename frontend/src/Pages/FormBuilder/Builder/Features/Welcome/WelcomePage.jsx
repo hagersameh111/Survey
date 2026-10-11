@@ -1,19 +1,20 @@
 import { Clock } from "lucide-react";
 import Breadcrumb from "../../Shared/Breadcrumb";
+import FormHeader from "../../Shared/FormHeader";
 
-const WelcomePage = () => {
+const WelcomePage = ({ page = {}, onUpdatePage }) => {
   return (
     <main className="relative flex-1 rounded-2xl bg-surface p-8 shadow-sm border border-border">
       <Breadcrumb />
+      <FormHeader title={page.title} description={page.description} onChange={onUpdatePage} />
       
       <div className="flex flex-col items-center justify-center p-12 text-center min-h-[500px]">
         <h1 className="text-2xl font-bold text-primary mb-4">
-          Welcome, we’d love your feedback
+          {page.title || "Welcome, we’d love your feedback"}
         </h1>
         
         <p className="text-text-secondary max-w-lg mb-8 leading-relaxed">
-          Your honest input helps us making better decisions in the future. Please share your
-          thoughts, every bit of feedback is appreciated.
+          {page.description || "Your honest input helps us making better decisions in the future. Please share your thoughts, every bit of feedback is appreciated."}
         </p>
 
         <div className="w-full max-w-xs text-left mb-6">

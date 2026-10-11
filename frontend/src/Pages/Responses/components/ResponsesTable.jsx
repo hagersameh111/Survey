@@ -1,33 +1,30 @@
-import React from "react";
-import ResponseRow from "./ResponseRow";
+import ResponseRow, { RESPONSE_COLS } from "./ResponseRow";
 
-const ResponsesTable = ({ responses = [], onViewDetails }) => {
-  return (
-    <div className="w-full overflow-x-auto">
-      {/* Table Header */}
-      <div className="grid grid-cols-[2fr_1.6fr_1.8fr_1.5fr_.7fr_1.2fr_.8fr_1fr] px-5 pb-5 text-sm font-semibold text-gray-500 border-b border-gray-100">
-        <span>Name</span>
-        <span>Survey</span>
-        <span>Email</span>
-        <span>Phone</span>
-        <span>Age</span>
-        <span>Last Response</span>
-        <span>Rating</span>
-        <span>Actions</span>
+const HEADERS = ["Survey", "Email", "Phone", "Age", "Last Response", "Rating", "Actions"];
+
+const ResponsesTable = ({ responses = [], onViewDetails }) => (
+  <div className="mt-6 w-full overflow-x-auto">
+    <div className="min-w-[960px]">
+      <div className={`${RESPONSE_COLS} px-2 pb-3 text-sm text-text-secondary`}>
+        <span className="pl-1">Name</span>
+        {HEADERS.map((h) => (
+          <span key={h} className="text-center">
+            {h}
+          </span>
+        ))}
       </div>
 
-      {/* Table Rows Container */}
-      <div className="space-y-3 pt-3">
-        {responses.map((response) => (
+      <div className="space-y-2">
+        {responses.map((response, i) => (
           <ResponseRow
-            key={response.id || response.name}
+            key={response.id ?? `${response.name}-${i}`}
             response={response}
             onViewDetails={onViewDetails}
           />
         ))}
       </div>
     </div>
-  );
-};
+  </div>
+);
 
 export default ResponsesTable;
