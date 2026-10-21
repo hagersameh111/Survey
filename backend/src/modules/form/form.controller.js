@@ -74,7 +74,12 @@ export const update = async (req, res) => {
       data: form,
     });
   } catch (error) {
-    return res.status(404).json({
+    const statusCode =
+      error.message === "Form content can only be changed for draft forms"
+        ? 400
+        : 404;
+
+    return res.status(statusCode).json({
       success: false,
       message: error.message,
     });

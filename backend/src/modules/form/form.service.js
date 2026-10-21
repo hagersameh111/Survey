@@ -3,6 +3,12 @@ import Form from "./form.model.js";
 
 import bcrypt from "bcrypt";
 
+const assertFormIsDraft = (form) => {
+  if (form.status !== "draft") {
+    throw new Error("Form content can only be changed for draft forms");
+  }
+};
+
 export const createForm = async (userId, formData) => {
   const { title, description } = formData;
 
@@ -47,6 +53,8 @@ export const updateForm = async (formId, userId, formData) => {
     throw new Error("Form not found");
   }
 
+  assertFormIsDraft(form);
+
   if (formData.title !== undefined) {
     form.title = formData.title;
   }
@@ -69,6 +77,8 @@ export const addPage = async (formId, userId, pageData) => {
   if (!form) {
     throw new Error("Form not found");
   }
+
+  assertFormIsDraft(form);
 
   const pages = form.pages;
 
@@ -172,6 +182,8 @@ export const saveBuilder = async (formId, userId, builderData) => {
   if (!form) {
     throw new Error("Form not found");
   }
+
+  assertFormIsDraft(form);
 
   const pages = builderData.pages;
 
