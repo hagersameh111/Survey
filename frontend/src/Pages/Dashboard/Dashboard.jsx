@@ -1,6 +1,6 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../../components/layout/Sidebar";
-import useFolders from "../../hooks/useFolders";
+import useFolders from "../../hooks/useFolders.js";
 
 // Layout: sidebar stays, the selected folder page renders in <Outlet />
 const Dashboard = () => {

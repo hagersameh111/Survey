@@ -4,7 +4,7 @@ import DashboardHeader from "./components/DashboardHeader";
 import FormsTable from "./components/FormsTable";
 import WorkspaceGrid from "./components/WorkspaceGrid";
 import WorkspaceEmpty from "./components/WorkspaceEmpty";
-import useForms from "../../hooks/useForms";
+import useForms from "../../hooks/useForms.js";
 import { deleteForm, duplicateForm } from "../../api/forms";
 
 export const SORT_OPTIONS = [
