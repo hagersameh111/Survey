@@ -6,6 +6,19 @@ import { z } from "zod";
 |--------------------------------------------------------------------------
 */
 
+
+export const formAccessSchema = z.discriminatedUnion("type", [
+    z.object({
+    type: z.literal("open"),
+  }),
+
+  z.object({
+    type: z.literal("code"),
+    code: z.string().trim().min(4).max(64),
+  }),
+]);
+
+
 const headingDataSchema = z.object({
   text: z.string().trim().min(1).max(500),
 });
@@ -317,6 +330,11 @@ const saveBlockSchema = z.discriminatedUnion("type", [
   saveRatingBlockSchema,
 ]);
 
+const saveBlockWithIdSchema = z.intersection(
+  saveBlockSchema,
+  z.object({ id: z.string().optional() })
+);
+
 /*
 |--------------------------------------------------------------------------
 | Page Schema - Database
@@ -360,13 +378,7 @@ const savePageSchema = z.object({
 
   description: z.string().trim().max(1000).optional(),
 
-  blocks: z.array(
-    z.object({
-      id: z.string().optional(),
-      type: z.string(),
-      data: z.any(),
-    })
-  ).default([]),
+  blocks: z.array(saveBlockWithIdSchema).default([]),
 });
 
 /*

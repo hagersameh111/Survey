@@ -83,6 +83,26 @@ type: {
   }
 );
 
+const accessSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["open", "code"],
+      default: "open",
+      required: true,
+    },
+
+    codeHash: {
+      type: String,
+      select: false,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+
 const formSchema = new mongoose.Schema(
   {
     owner: {
@@ -116,6 +136,11 @@ const formSchema = new mongoose.Schema(
       default: {},
     },
 
+    access: {
+  type: accessSchema,
+  default: () => ({ type: "open" }),
+},
+
     pages: {
       type: [pageSchema],
       default: [],
@@ -125,7 +150,9 @@ const formSchema = new mongoose.Schema(
     timestamps: true,
     versionKey: false,
   }
+
 );
+
 
 const Form = mongoose.model("Form", formSchema);
 

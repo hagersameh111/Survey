@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import Form from "./form.model.js";
 
+import bcrypt from "bcrypt";
 
 export const createForm = async (userId, formData) => {
   const { title, description } = formData;
@@ -26,6 +27,14 @@ export const getFormById = async (formId, userId) => {
   }
 
   return form;
+};
+
+export const getAllForms = async (userId) => {
+  const forms = await Form.find({
+    owner: userId,
+  }).sort({ createdAt: -1 });
+
+  return forms;
 };
 
 export const updateForm = async (formId, userId, formData) => {
@@ -403,3 +412,179 @@ export const saveBuilder = async (formId, userId, builderData) => {
 
   return form;
 };
+
+
+export const publishForm = async (formId, userId) => {
+  const form = await Form.findOne({
+  _id: formId,
+  owner: userId,
+}).select("+access.codeHash");
+
+  if (!form) {
+    throw new Error("Form not found");
+  }
+
+  if (form.status === "published") {
+    throw new Error("Form is already published");
+  }
+
+  if (form.status === "closed") {
+    throw new Error("Closed forms cannot be published");
+  }
+
+  if (
+  form.access?.type === "code" &&
+  !form.access.codeHash
+) {
+  throw new Error(
+    "Access code must be configured before publishing"
+  );
+}
+
+  const pages = [...form.pages].sort(
+    (a, b) => a.order - b.order
+  );
+
+  const errors = [];
+
+  const welcomePages = pages.filter(
+    (page) => page.type === "welcome"
+  );
+
+  const participantInfoPages = pages.filter(
+    (page) => page.type === "participant_info"
+  );
+
+  const questionPages = pages.filter(
+    (page) => page.type === "questions"
+  );
+
+  const endingPages = pages.filter(
+    (page) => page.type === "ending"
+  );
+
+  // Welcome
+  if (welcomePages.length !== 1) {
+    errors.push("Form must have exactly one welcome page");
+  } else if (pages[0]?._id.toString() !== welcomePages[0]._id.toString()) {
+    errors.push("Welcome page must be the first page");
+  }
+
+  // Participant info is optional, but can exist only once.
+  if (participantInfoPages.length > 1) {
+    errors.push("Participant info page can only exist once");
+  }
+
+  if (
+    participantInfoPages.length === 1 &&
+    welcomePages.length === 1 &&
+    pages.findIndex(
+      (page) => page.type === "participant_info"
+    ) < pages.findIndex(
+      (page) => page.type === "welcome"
+    )
+  ) {
+    errors.push("Participant info page must come after welcome");
+  }
+
+  // At least one questions page
+  if (questionPages.length === 0) {
+    errors.push("Form must have at least one questions page");
+  }
+
+  // Ending
+  if (endingPages.length !== 1) {
+    errors.push("Form must have exactly one ending page");
+  } else if (
+    pages[pages.length - 1]?._id.toString() !==
+    endingPages[0]._id.toString()
+  ) {
+    errors.push("Ending page must be the last page");
+  }
+
+  // Questions must contain at least one question block.
+  const questionBlockTypes = new Set([
+    "short_text",
+    "long_text",
+    "email",
+    "phone",
+    "number",
+    "date",
+    "single_choice",
+    "multiple_choice",
+    "dropdown",
+    "rating",
+  ]);
+
+  const hasQuestion = questionPages.some((page) =>
+    page.blocks.some((block) =>
+      questionBlockTypes.has(block.type)
+    )
+  );
+
+  if (!hasQuestion) {
+    errors.push("Form must contain at least one question");
+  }
+
+  if (errors.length > 0) {
+    const error = new Error("Form cannot be published");
+    error.details = errors;
+    throw error;
+  }
+
+ 
+form.status = "published";
+await form.save();
+
+const safeForm = form.toObject();
+
+if (safeForm.access) {
+  delete safeForm.access.codeHash;
+}
+
+return safeForm;
+
+};
+
+
+export const updateFormAccess = async (formId, userId, accessData) => {
+  const form = await Form.findOne({
+    _id: formId,
+    owner: userId,
+  }).select("+access.codeHash");
+
+  if (!form) {
+    const error = new Error("Form not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (form.status !== "draft") {
+    const error = new Error(
+      "Access settings can only be changed for draft forms"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (accessData.type === "open") {
+    form.access = {
+      type: "open",
+      codeHash: undefined,
+    };
+  } else {
+    const codeHash = await bcrypt.hash(accessData.code, 12);
+
+    form.access = {
+      type: "code",
+      codeHash,
+    };
+  }
+
+  await form.save();
+
+  return {
+    type: form.access.type,
+  };
+};
+

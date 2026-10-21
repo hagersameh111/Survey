@@ -2,9 +2,12 @@ import express from "express";
 import {
   create,
   getById,
+  getAll,
   update,
   addPageToForm,
   saveBuilder,
+  publish,
+  updateAccess,
 } from "./form.controller.js";
 
 import { auth } from "../../middlewares/auth.middleware.js";
@@ -15,6 +18,7 @@ import {
   updateFormSchema,
   addPageSchema,
   saveBuilderSchema,
+  formAccessSchema,
 } from "./form.validation.js";
 
 const router = express.Router();
@@ -31,6 +35,8 @@ router.get(
   auth,
   getById
 );
+
+router.get("/", auth, getAll);
 
 router.patch(
   "/:formId",
@@ -54,4 +60,12 @@ router.put(
   saveBuilder
 );
 
+router.post("/:formId/publish", auth, publish);
+
+router.patch(
+  "/:formId/access",
+  auth,
+  validate(formAccessSchema),
+  updateAccess
+);
 export default router;
