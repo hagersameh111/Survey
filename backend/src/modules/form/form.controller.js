@@ -1,5 +1,6 @@
 import {
   createForm,
+  duplicateForm,
   getFormById,
   updateForm,
   addPage,
@@ -21,6 +22,31 @@ export const create = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const duplicate = async (req, res) => {
+  try {
+    const form = await duplicateForm(req.params.formId, req.user.id);
+
+    return res.status(201).json({
+      success: true,
+      data: form,
+    });
+  } catch (error) {
+    if (error.message === "Form not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Duplicate form error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };

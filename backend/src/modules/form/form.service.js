@@ -22,6 +22,37 @@ export const createForm = async (userId, formData) => {
   return form;
 };
 
+export const duplicateForm = async (formId, userId) => {
+  const sourceForm = await Form.findOne({
+    _id: formId,
+    owner: userId,
+  });
+
+  if (!sourceForm) {
+    throw new Error("Form not found");
+  }
+
+  const form = await Form.create({
+    owner: sourceForm.owner,
+    title: sourceForm.title,
+    description: sourceForm.description,
+    status: "draft",
+    pages: sourceForm.pages.map((page) => ({
+      type: page.type,
+      title: page.title,
+      description: page.description,
+      order: page.order,
+      blocks: page.blocks.map((block) => ({
+        type: block.type,
+        order: block.order,
+        data: structuredClone(block.data),
+      })),
+    })),
+  });
+
+  return form;
+};
+
 export const getFormById = async (formId, userId) => {
   const form = await Form.findOne({
     _id: formId,

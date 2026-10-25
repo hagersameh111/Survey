@@ -1,6 +1,7 @@
 import express from "express";
 import {
   create,
+  duplicate,
   getById,
   getAll,
   update,
@@ -29,6 +30,8 @@ router.post(
   validate(createFormSchema),
   create
 );
+
+router.post("/:formId/duplicate", auth, duplicate);
 
 router.get(
   "/:formId",
