@@ -1,7 +1,9 @@
 import {
   createForm,
+  closeForm,
   duplicateForm,
   getFormById,
+  reopenForm,
   updateForm,
   addPage,
   saveBuilder as saveBuilderService,
@@ -190,6 +192,70 @@ export const publish = async (req, res) => {
     console.error("Publish form error:", error);
 
     return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const close = async (req, res) => {
+  try {
+    const form = await closeForm(req.params.formId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      data: form,
+    });
+  } catch (error) {
+    if (error.message === "Form not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.message === "Only published forms can be closed") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Close form error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const reopen = async (req, res) => {
+  try {
+    const form = await reopenForm(req.params.formId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      data: form,
+    });
+  } catch (error) {
+    if (error.message === "Form not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.message === "Only closed forms can be reopened") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Reopen form error:", error);
+
+    return res.status(500).json({
+      success: false,
       message: "Internal server error",
     });
   }

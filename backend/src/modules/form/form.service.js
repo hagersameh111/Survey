@@ -589,6 +589,46 @@ return safeForm;
 
 };
 
+export const closeForm = async (formId, userId) => {
+  const form = await Form.findOne({
+    _id: formId,
+    owner: userId,
+  });
+
+  if (!form) {
+    throw new Error("Form not found");
+  }
+
+  if (form.status !== "published") {
+    throw new Error("Only published forms can be closed");
+  }
+
+  form.status = "closed";
+  await form.save();
+
+  return form;
+};
+
+export const reopenForm = async (formId, userId) => {
+  const form = await Form.findOne({
+    _id: formId,
+    owner: userId,
+  });
+
+  if (!form) {
+    throw new Error("Form not found");
+  }
+
+  if (form.status !== "closed") {
+    throw new Error("Only closed forms can be reopened");
+  }
+
+  form.status = "published";
+  await form.save();
+
+  return form;
+};
+
 
 export const updateFormAccess = async (formId, userId, accessData) => {
   const form = await Form.findOne({

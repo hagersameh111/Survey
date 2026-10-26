@@ -1,6 +1,7 @@
 import express from "express";
 import {
   create,
+  close,
   duplicate,
   getById,
   getAll,
@@ -8,6 +9,7 @@ import {
   addPageToForm,
   saveBuilder,
   publish,
+  reopen,
   updateAccess,
 } from "./form.controller.js";
 
@@ -64,6 +66,8 @@ router.put(
 );
 
 router.post("/:formId/publish", auth, publish);
+router.post("/:formId/close", auth, close);
+router.post("/:formId/reopen", auth, reopen);
 
 router.patch(
   "/:formId/access",
