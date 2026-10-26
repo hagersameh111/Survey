@@ -102,6 +102,20 @@ const accessSchema = new mongoose.Schema(
   }
 );
 
+const settingsSchema = new mongoose.Schema(
+  {
+    identityMode: {
+      type: String,
+      enum: ["anonymous", "identified"],
+      default: "anonymous",
+    },
+  },
+  {
+    _id: false,
+    strict: false,
+  }
+);
+
 
 const formSchema = new mongoose.Schema(
   {
@@ -132,8 +146,8 @@ const formSchema = new mongoose.Schema(
     },
 
     settings: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {},
+      type: settingsSchema,
+      default: () => ({}),
     },
 
     access: {

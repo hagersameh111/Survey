@@ -3,6 +3,18 @@ import Form from "./form.model.js";
 
 import bcrypt from "bcrypt";
 
+const getIdentityMode = (identityMode) => {
+  if (identityMode === undefined) {
+    return "anonymous";
+  }
+
+  if (identityMode === "anonymous" || identityMode === "identified") {
+    return identityMode;
+  }
+
+  throw new Error("Invalid stored identity mode");
+};
+
 const assertFormIsDraft = (form) => {
   if (form.status !== "draft") {
     throw new Error("Form content can only be changed for draft forms");
@@ -37,6 +49,9 @@ export const duplicateForm = async (formId, userId) => {
     title: sourceForm.title,
     description: sourceForm.description,
     status: "draft",
+    settings: {
+      identityMode: getIdentityMode(sourceForm.settings?.identityMode),
+    },
     pages: sourceForm.pages.map((page) => ({
       type: page.type,
       title: page.title,
@@ -668,6 +683,47 @@ export const updateFormAccess = async (formId, userId, accessData) => {
 
   return {
     type: form.access.type,
+  };
+};
+
+export const updateFormIdentityMode = async (
+  formId,
+  userId,
+  identityMode
+) => {
+  if (identityMode !== "anonymous" && identityMode !== "identified") {
+    const error = new Error("Invalid identity mode");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const form = await Form.findOne({
+    _id: formId,
+    owner: userId,
+  });
+
+  if (!form) {
+    const error = new Error("Form not found");
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (form.status !== "draft") {
+    const error = new Error(
+      "Identity mode can only be changed for draft forms"
+    );
+    error.statusCode = 400;
+    throw error;
+  }
+
+  form.settings ??= {};
+  form.settings.identityMode = identityMode;
+
+  await form.save();
+
+  return {
+    formId: form._id,
+    identityMode: getIdentityMode(form.settings.identityMode),
   };
 };
 

@@ -18,6 +18,12 @@ export const formAccessSchema = z.discriminatedUnion("type", [
   }),
 ]);
 
+export const updateIdentityModeSchema = z
+  .object({
+    identityMode: z.enum(["anonymous", "identified"]),
+  })
+  .strict();
+
 
 const headingDataSchema = z.object({
   text: z.string().trim().min(1).max(500),

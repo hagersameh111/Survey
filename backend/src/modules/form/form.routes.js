@@ -11,6 +11,7 @@ import {
   publish,
   reopen,
   updateAccess,
+  updateIdentityMode,
 } from "./form.controller.js";
 
 import { auth } from "../../middlewares/auth.middleware.js";
@@ -22,6 +23,7 @@ import {
   addPageSchema,
   saveBuilderSchema,
   formAccessSchema,
+  updateIdentityModeSchema,
 } from "./form.validation.js";
 
 const router = express.Router();
@@ -74,5 +76,12 @@ router.patch(
   auth,
   validate(formAccessSchema),
   updateAccess
+);
+
+router.patch(
+  "/:formId/settings/identity-mode",
+  auth,
+  validate(updateIdentityModeSchema),
+  updateIdentityMode
 );
 export default router;

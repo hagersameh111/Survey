@@ -10,6 +10,7 @@ import {
   publishForm as publishFormService,
   getAllForms as getAllFormsService,
   updateFormAccess as updateFormAccessService,
+  updateFormIdentityMode as updateFormIdentityModeService,
 } from "./form.service.js";
 
 export const create = async (req, res) => {
@@ -284,6 +285,35 @@ export const updateAccess = async (req, res) => {
     console.error("Update form access error:", error);
 
     return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const updateIdentityMode = async (req, res) => {
+  try {
+    const result = await updateFormIdentityModeService(
+      req.params.formId,
+      req.user.id,
+      req.body.identityMode
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Update form identity mode error:", error);
+
+    return res.status(500).json({
+      success: false,
       message: "Internal server error",
     });
   }
