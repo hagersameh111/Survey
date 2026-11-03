@@ -12,6 +12,7 @@ import {
   reopen,
   updateAccess,
   updateIdentityMode,
+  remove,
 } from "./form.controller.js";
 
 import { auth } from "../../middlewares/auth.middleware.js";
@@ -24,9 +25,23 @@ import {
   saveBuilderSchema,
   formAccessSchema,
   updateIdentityModeSchema,
+  formIdSchema,
 } from "./form.validation.js";
 
 const router = express.Router();
+
+const validateFormId = (req, res, next) => {
+  const result = formIdSchema.safeParse(req.params.formId);
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: result.error.issues[0]?.message || "Invalid form ID",
+    });
+  }
+
+  return next();
+};
 
 router.post(
   "/",
@@ -44,6 +59,8 @@ router.get(
 );
 
 router.get("/", auth, getAll);
+
+router.delete("/:formId", auth, validateFormId, remove);
 
 router.patch(
   "/:formId",

@@ -116,6 +116,11 @@ const settingsSchema = new mongoose.Schema(
   }
 );
 
+const hideVersionKey = (_document, returnedObject) => {
+  delete returnedObject.__v;
+  delete returnedObject.writeFence;
+  return returnedObject;
+};
 
 const formSchema = new mongoose.Schema(
   {
@@ -123,6 +128,11 @@ const formSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    writeFence: {
+      type: Number,
+      select: false,
     },
 
     title: {
@@ -162,7 +172,14 @@ const formSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    versionKey: false,
+    versionKey: "__v",
+    optimisticConcurrency: true,
+    toJSON: {
+      transform: hideVersionKey,
+    },
+    toObject: {
+      transform: hideVersionKey,
+    },
   }
 
 );

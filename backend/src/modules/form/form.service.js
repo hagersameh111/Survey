@@ -1,7 +1,44 @@
 import mongoose from "mongoose";
 import Form from "./form.model.js";
+import Response from "../response/response.model.js";
+import ParticipantToken from "../response/participant-token.model.js";
+import {
+  coordinateFormWrite,
+  createTransactionConflictError,
+  isTransactionConflict,
+  runInMongoTransaction,
+} from "./form-write-fence.js";
+import { publicBlockDataSchemas, questionDataSchemas } from "./form.validation.js";
 
 import bcrypt from "bcrypt";
+
+const ANSWERABLE_BLOCK_TYPES = new Set(Object.keys(questionDataSchemas));
+
+const hasAnswerableBlock = (page) =>
+  (page.blocks || []).some((block) => ANSWERABLE_BLOCK_TYPES.has(block.type));
+
+const validateBlocksForPublishing = (pages, errors) => {
+  pages.forEach((page, pageIndex) => {
+    (page.blocks || []).forEach((block, blockIndex) => {
+      const pageReference = `page ${page.order ?? pageIndex + 1} (${page._id ?? "unknown"})`;
+      const blockReference = `block ${block.order ?? blockIndex + 1} (${block._id ?? "unknown"})`;
+      const dataSchema = publicBlockDataSchemas[block.type];
+
+      if (!dataSchema) {
+        errors.push(`${pageReference}, ${blockReference}: unsupported block type "${String(block.type)}"`);
+        return;
+      }
+
+      const result = dataSchema.safeParse(block.data ?? {});
+      if (!result.success) {
+        for (const issue of result.error.issues) {
+          const dataPath = issue.path.length > 0 ? issue.path.join(".") : "data";
+          errors.push(`${pageReference}, ${blockReference} (${block.type}), data.${dataPath}: ${issue.message}`);
+        }
+      }
+    });
+  });
+};
 
 const getIdentityMode = (identityMode) => {
   if (identityMode === undefined) {
@@ -18,6 +55,22 @@ const getIdentityMode = (identityMode) => {
 const assertFormIsDraft = (form) => {
   if (form.status !== "draft") {
     throw new Error("Form content can only be changed for draft forms");
+  }
+};
+
+const saveForm = async (form) => {
+  try {
+    await form.save();
+  } catch (error) {
+    if (error?.name === "VersionError") {
+      const conflict = new Error(
+        "Form was changed by another request. Reload and try again."
+      );
+      conflict.statusCode = 409;
+      throw conflict;
+    }
+
+    throw error;
   }
 };
 
@@ -81,6 +134,100 @@ export const getFormById = async (formId, userId) => {
   return form;
 };
 
+export const deleteForm = async (formId, userId) => {
+  if (
+    typeof formId !== "string" ||
+    !/^[a-f\d]{24}$/i.test(formId) ||
+    !mongoose.isValidObjectId(formId)
+  ) {
+    const error = new Error("Invalid form ID");
+    error.statusCode = 400;
+    throw error;
+  }
+
+  try {
+    await runInMongoTransaction(async (session) => {
+      const coordinated = await coordinateFormWrite(formId, session, { owner: userId });
+      if (!coordinated) {
+        const error = new Error("Form not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      const deleted = await Form.deleteOne(
+        { _id: formId, owner: userId },
+        { session }
+      );
+
+      if (deleted.deletedCount !== 1) {
+        const error = new Error("Form not found");
+        error.statusCode = 404;
+        throw error;
+      }
+
+      await Response.deleteMany({ form: formId }, { session });
+      await ParticipantToken.deleteMany({ form: formId }, { session });
+    });
+  } catch (error) {
+    if (isTransactionConflict(error)) {
+      throw createTransactionConflictError();
+    }
+
+    throw error;
+  }
+};
+
+const toPublicFormDto = (form) => ({
+  _id: form._id.toString(),
+  title: form.title,
+  description: form.description,
+  identityMode: getIdentityMode(form.settings?.identityMode),
+  pages: [...form.pages]
+    .sort((left, right) => left.order - right.order)
+    .map((page) => ({
+      _id: page._id.toString(),
+      type: page.type,
+      title: page.title,
+      description: page.description,
+      order: page.order,
+      blocks: [...page.blocks]
+        .sort((left, right) => left.order - right.order)
+        .map((block) => {
+          const dataSchema = publicBlockDataSchemas[block.type];
+          const parsedData = dataSchema?.safeParse(block.data ?? {});
+
+          if (!block._id || !parsedData?.success) {
+            throw new Error("Published Form contains invalid block configuration");
+          }
+
+          return {
+            _id: block._id.toString(),
+            type: block.type,
+            order: block.order,
+            data: parsedData.data,
+          };
+        }),
+    })),
+});
+
+export const getPublicFormById = async (formId) => {
+  if (
+    typeof formId !== "string" ||
+    !/^[a-f\d]{24}$/i.test(formId) ||
+    !mongoose.isValidObjectId(formId)
+  ) {
+    return null;
+  }
+
+  const form = await Form.findOne({
+    _id: formId,
+    status: "published",
+    "access.type": "open",
+  });
+
+  return form ? toPublicFormDto(form) : null;
+};
+
 export const getAllForms = async (userId) => {
   const forms = await Form.find({
     owner: userId,
@@ -109,7 +256,7 @@ export const updateForm = async (formId, userId, formData) => {
     form.description = formData.description;
   }
 
-  await form.save();
+  await saveForm(form);
 
   return form;
 };
@@ -213,7 +360,7 @@ export const addPage = async (formId, userId, pageData) => {
     blocks: [],
   });
 
-  await form.save();
+  await saveForm(form);
 
   return form;
 };
@@ -232,6 +379,15 @@ export const saveBuilder = async (formId, userId, builderData) => {
   assertFormIsDraft(form);
 
   const pages = builderData.pages;
+
+  for (const page of pages) {
+    if (
+      (page.type === "welcome" || page.type === "ending") &&
+      hasAnswerableBlock(page)
+    ) {
+      throw new Error(`${page.type} pages cannot contain answerable blocks`);
+    }
+  }
 
   /*
   |--------------------------------------------------------------------------
@@ -466,7 +622,7 @@ export const saveBuilder = async (formId, userId, builderData) => {
 
   form.pages = savedPages;
 
-  await form.save();
+  await saveForm(form);
 
   return form;
 };
@@ -504,6 +660,17 @@ export const publishForm = async (formId, userId) => {
   );
 
   const errors = [];
+
+  validateBlocksForPublishing(pages, errors);
+
+  for (const page of pages) {
+    if (
+      (page.type === "welcome" || page.type === "ending") &&
+      hasAnswerableBlock(page)
+    ) {
+      errors.push(`${page.type} pages cannot contain answerable blocks`);
+    }
+  }
 
   const welcomePages = pages.filter(
     (page) => page.type === "welcome"
@@ -561,22 +728,9 @@ export const publishForm = async (formId, userId) => {
   }
 
   // Questions must contain at least one question block.
-  const questionBlockTypes = new Set([
-    "short_text",
-    "long_text",
-    "email",
-    "phone",
-    "number",
-    "date",
-    "single_choice",
-    "multiple_choice",
-    "dropdown",
-    "rating",
-  ]);
-
   const hasQuestion = questionPages.some((page) =>
     page.blocks.some((block) =>
-      questionBlockTypes.has(block.type)
+      ANSWERABLE_BLOCK_TYPES.has(block.type)
     )
   );
 
@@ -590,9 +744,9 @@ export const publishForm = async (formId, userId) => {
     throw error;
   }
 
- 
+
 form.status = "published";
-await form.save();
+await saveForm(form);
 
 const safeForm = form.toObject();
 
@@ -603,7 +757,6 @@ if (safeForm.access) {
 return safeForm;
 
 };
-
 export const closeForm = async (formId, userId) => {
   const form = await Form.findOne({
     _id: formId,
@@ -619,7 +772,7 @@ export const closeForm = async (formId, userId) => {
   }
 
   form.status = "closed";
-  await form.save();
+  await saveForm(form);
 
   return form;
 };
@@ -639,7 +792,7 @@ export const reopenForm = async (formId, userId) => {
   }
 
   form.status = "published";
-  await form.save();
+  await saveForm(form);
 
   return form;
 };
@@ -679,7 +832,7 @@ export const updateFormAccess = async (formId, userId, accessData) => {
     };
   }
 
-  await form.save();
+  await saveForm(form);
 
   return {
     type: form.access.type,
@@ -719,11 +872,10 @@ export const updateFormIdentityMode = async (
   form.settings ??= {};
   form.settings.identityMode = identityMode;
 
-  await form.save();
+  await saveForm(form);
 
   return {
     formId: form._id,
     identityMode: getIdentityMode(form.settings.identityMode),
   };
 };
-

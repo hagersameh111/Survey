@@ -3,6 +3,7 @@ import {
   closeForm,
   duplicateForm,
   getFormById,
+  getPublicFormById,
   reopenForm,
   updateForm,
   addPage,
@@ -11,6 +12,7 @@ import {
   getAllForms as getAllFormsService,
   updateFormAccess as updateFormAccessService,
   updateFormIdentityMode as updateFormIdentityModeService,
+  deleteForm as deleteFormService,
 } from "./form.service.js";
 
 export const create = async (req, res) => {
@@ -90,6 +92,53 @@ export const getById = async (req, res) => {
   }
 };
 
+export const remove = async (req, res) => {
+  try {
+    await deleteFormService(req.params.formId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Form deleted successfully",
+    });
+  } catch (error) {
+    if ([400, 404, 409].includes(error.statusCode)) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Delete form error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const getPublicById = async (req, res) => {
+  try {
+    const form = await getPublicFormById(req.params.formId);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: "Form not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: form,
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 export const update = async (req, res) => {
   try {
     const form = await updateForm(
@@ -103,10 +152,10 @@ export const update = async (req, res) => {
       data: form,
     });
   } catch (error) {
-    const statusCode =
-      error.message === "Form content can only be changed for draft forms"
+    const statusCode = error.statusCode ||
+      (error.message === "Form content can only be changed for draft forms"
         ? 400
-        : 404;
+        : 404);
 
     return res.status(statusCode).json({
       success: false,
@@ -128,7 +177,7 @@ export const addPageToForm = async (req, res) => {
       data: form,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error.statusCode || 400).json({
       success: false,
       message: error.message,
     });
@@ -148,7 +197,7 @@ export const saveBuilder = async (req, res) => {
       data: form,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error.statusCode || 400).json({
       success: false,
       message: error.message,
     });
@@ -168,6 +217,12 @@ export const publish = async (req, res) => {
       data: form,
     });
   } catch (error) {
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        message: error.message,
+      });
+    }
+
     if (error.details) {
       return res.status(400).json({
         message: error.message,
@@ -221,6 +276,13 @@ export const close = async (req, res) => {
       });
     }
 
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     console.error("Close form error:", error);
 
     return res.status(500).json({
@@ -248,6 +310,13 @@ export const reopen = async (req, res) => {
 
     if (error.message === "Only closed forms can be reopened") {
       return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.statusCode === 409) {
+      return res.status(409).json({
         success: false,
         message: error.message,
       });

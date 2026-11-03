@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+export const formIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "Invalid form ID");
+
 /*
 |--------------------------------------------------------------------------
 | Block Data Schemas
@@ -40,6 +42,20 @@ const imageDataSchema = z.object({
 
 const dividerDataSchema = z.object({});
 
+const validateTextLengthBounds = (data, context) => {
+  if (
+    data.minLength !== undefined &&
+    data.maxLength !== undefined &&
+    data.minLength > data.maxLength
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["maxLength"],
+      message: "Maximum length must be greater than or equal to minimum length",
+    });
+  }
+};
+
 const shortTextDataSchema = z.object({
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
@@ -47,7 +63,7 @@ const shortTextDataSchema = z.object({
   placeholder: z.string().trim().max(200).optional(),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
-});
+}).superRefine(validateTextLengthBounds);
 
 const longTextDataSchema = z.object({
   question: z.string().trim().min(1).max(500),
@@ -56,7 +72,7 @@ const longTextDataSchema = z.object({
   placeholder: z.string().trim().max(500).optional(),
   minLength: z.number().int().min(0).optional(),
   maxLength: z.number().int().min(1).optional(),
-});
+}).superRefine(validateTextLengthBounds);
 
 const emailDataSchema = z.object({
   question: z.string().trim().min(1).max(500),
@@ -79,40 +95,107 @@ const numberDataSchema = z.object({
   min: z.number().optional(),
   max: z.number().optional(),
   placeholder: z.string().trim().max(100).optional(),
+}).superRefine((data, context) => {
+  if (data.min !== undefined && data.max !== undefined && data.min > data.max) {
+    context.addIssue({
+      code: "custom",
+      path: ["max"],
+      message: "Maximum must be greater than or equal to minimum",
+    });
+  }
+});
+
+export const isValidDateOnly = (value) => {
+  if (typeof value !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const [year, month, day] = value.split("-").map(Number);
+  if (year < 1 || month < 1 || month > 12) {
+    return false;
+  }
+
+  const isLeapYear = year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
+  const daysInMonth = [31, isLeapYear ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+  return day >= 1 && day <= daysInMonth[month - 1];
+};
+
+const dateOnlySchema = z.string().refine(isValidDateOnly, {
+  message: "Date must be a valid YYYY-MM-DD calendar date",
 });
 
 const dateDataSchema = z.object({
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
-  minDate: z.string().optional(),
-  maxDate: z.string().optional(),
+  minDate: dateOnlySchema.optional(),
+  maxDate: dateOnlySchema.optional(),
+}).superRefine((data, context) => {
+  if (
+    data.minDate !== undefined &&
+    data.maxDate !== undefined &&
+    data.minDate > data.maxDate
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["maxDate"],
+      message: "Maximum date must be on or after minimum date",
+    });
+  }
 });
 
 const choiceOptionSchema = z.object({
   label: z.string().trim().min(1).max(200),
 });
 
+const choiceOptionsSchema = z.array(choiceOptionSchema).min(1).superRefine((options, context) => {
+  const seenLabels = new Set();
+
+  options.forEach((option, index) => {
+    if (seenLabels.has(option.label)) {
+      context.addIssue({
+        code: "custom",
+        path: [index, "label"],
+        message: "Choice labels must be unique within a question",
+      });
+    }
+
+    seenLabels.add(option.label);
+  });
+});
+
 const singleChoiceDataSchema = z.object({
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
-  options: z.array(choiceOptionSchema).min(1),
+  options: choiceOptionsSchema,
 });
 
 const multipleChoiceDataSchema = z.object({
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
-  options: z.array(choiceOptionSchema).min(1),
+  options: choiceOptionsSchema,
   maxSelections: z.number().int().min(1).optional(),
+}).superRefine((data, context) => {
+  if (
+    data.maxSelections !== undefined &&
+    data.maxSelections > data.options.length
+  ) {
+    context.addIssue({
+      code: "custom",
+      path: ["maxSelections"],
+      message: "Maximum selections cannot exceed the number of options",
+    });
+  }
 });
 
 const dropdownDataSchema = z.object({
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
-  options: z.array(choiceOptionSchema).min(1),
+  options: choiceOptionsSchema,
 });
 
 const ratingDataSchema = z.object({
@@ -122,6 +205,27 @@ const ratingDataSchema = z.object({
   style: z.enum(["stars", "numbers", "emoji"]),
   scale: z.number().int().min(2).max(10),
 });
+
+export const questionDataSchemas = {
+  short_text: shortTextDataSchema,
+  long_text: longTextDataSchema,
+  email: emailDataSchema,
+  phone: phoneDataSchema,
+  number: numberDataSchema,
+  date: dateDataSchema,
+  single_choice: singleChoiceDataSchema,
+  multiple_choice: multipleChoiceDataSchema,
+  dropdown: dropdownDataSchema,
+  rating: ratingDataSchema,
+};
+
+export const publicBlockDataSchemas = {
+  heading: headingDataSchema,
+  text: textDataSchema,
+  image: imageDataSchema,
+  divider: dividerDataSchema,
+  ...questionDataSchemas,
+};
 
 /*
 |--------------------------------------------------------------------------
