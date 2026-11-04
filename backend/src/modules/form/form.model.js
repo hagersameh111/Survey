@@ -83,12 +83,56 @@ type: {
   }
 );
 
+const accessSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["open", "code"],
+      default: "open",
+      required: true,
+    },
+
+    codeHash: {
+      type: String,
+      select: false,
+    },
+  },
+  {
+    _id: false,
+  }
+);
+
+const settingsSchema = new mongoose.Schema(
+  {
+    identityMode: {
+      type: String,
+      enum: ["anonymous", "identified"],
+      default: "anonymous",
+    },
+  },
+  {
+    _id: false,
+    strict: false,
+  }
+);
+
+const hideVersionKey = (_document, returnedObject) => {
+  delete returnedObject.__v;
+  delete returnedObject.writeFence;
+  return returnedObject;
+};
+
 const formSchema = new mongoose.Schema(
   {
     owner: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
+    },
+
+    writeFence: {
+      type: Number,
+      select: false,
     },
 
     title: {
@@ -119,9 +163,14 @@ const formSchema = new mongoose.Schema(
     },
 
     settings: {
-      type: mongoose.Schema.Types.Mixed,
-      default: {},
+      type: settingsSchema,
+      default: () => ({}),
     },
+
+    access: {
+  type: accessSchema,
+  default: () => ({ type: "open" }),
+},
 
     pages: {
       type: [pageSchema],
@@ -130,9 +179,18 @@ const formSchema = new mongoose.Schema(
   },
   {
     timestamps: true,
-    versionKey: false,
+    versionKey: "__v",
+    optimisticConcurrency: true,
+    toJSON: {
+      transform: hideVersionKey,
+    },
+    toObject: {
+      transform: hideVersionKey,
+    },
   }
+
 );
+
 
 const Form = mongoose.model("Form", formSchema);
 

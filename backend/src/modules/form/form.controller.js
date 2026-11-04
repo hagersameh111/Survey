@@ -1,20 +1,19 @@
 import {
   createForm,
+  closeForm,
+  duplicateForm,
   getFormById,
+  getPublicFormById,
+  reopenForm,
   updateForm,
   addPage,
   saveBuilder as saveBuilderService,
   listForms,
+  publishForm as publishFormService,
+  updateFormAccess as updateFormAccessService,
+  updateFormIdentityMode as updateFormIdentityModeService,
+  deleteForm as deleteFormService,
 } from "./form.service.js";
-
-export const list = async (req, res) => {
-  try {
-    const forms = await listForms(req.user.id, req.query);
-    return res.status(200).json({ success: true, data: forms });
-  } catch (error) {
-    return res.status(500).json({ success: false, message: error.message });
-  }
-};
 
 export const create = async (req, res) => {
   try {
@@ -28,6 +27,50 @@ export const create = async (req, res) => {
     return res.status(500).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+export const duplicate = async (req, res) => {
+  try {
+    const form = await duplicateForm(req.params.formId, req.user.id);
+
+    return res.status(201).json({
+      success: true,
+      data: form,
+    });
+  } catch (error) {
+    if (error.message === "Form not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Duplicate form error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const getAll = async (req, res) => {
+  try {
+    const forms = await listForms(req.user.id, req.query);
+
+    return res.status(200).json({
+      success: true,
+      count: forms.length,
+      data: forms,
+    });
+  } catch (error) {
+    console.error("Get all forms error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };
@@ -51,6 +94,53 @@ export const getById = async (req, res) => {
   }
 };
 
+export const remove = async (req, res) => {
+  try {
+    await deleteFormService(req.params.formId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      message: "Form deleted successfully",
+    });
+  } catch (error) {
+    if ([400, 404, 409].includes(error.statusCode)) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Delete form error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const getPublicById = async (req, res) => {
+  try {
+    const form = await getPublicFormById(req.params.formId);
+
+    if (!form) {
+      return res.status(404).json({
+        success: false,
+        message: "Form not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: form,
+    });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 export const update = async (req, res) => {
   try {
     const form = await updateForm(
@@ -64,7 +154,12 @@ export const update = async (req, res) => {
       data: form,
     });
   } catch (error) {
-    return res.status(404).json({
+    const statusCode = error.statusCode ||
+      (error.message === "Form content can only be changed for draft forms"
+        ? 400
+        : 404);
+
+    return res.status(statusCode).json({
       success: false,
       message: error.message,
     });
@@ -84,7 +179,7 @@ export const addPageToForm = async (req, res) => {
       data: form,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error.statusCode || 400).json({
       success: false,
       message: error.message,
     });
@@ -104,9 +199,193 @@ export const saveBuilder = async (req, res) => {
       data: form,
     });
   } catch (error) {
-    return res.status(400).json({
+    return res.status(error.statusCode || 400).json({
       success: false,
       message: error.message,
+    });
+  }
+};
+
+
+export const publish = async (req, res) => {
+  try {
+    const form = await publishFormService(
+      req.params.formId,
+      req.user.id
+    );
+
+    return res.status(200).json({
+      message: "Form published successfully",
+      data: form,
+    });
+  } catch (error) {
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        message: error.message,
+      });
+    }
+
+    if (error.details) {
+      return res.status(400).json({
+        message: error.message,
+        errors: error.details,
+      });
+    }
+
+    if (error.message === "Form not found") {
+      return res.status(404).json({
+        message: error.message,
+      });
+    }
+
+    if (
+      error.message === "Form is already published" ||
+      error.message === "Closed forms cannot be published"
+    ) {
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
+
+    console.error("Publish form error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const close = async (req, res) => {
+  try {
+    const form = await closeForm(req.params.formId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      data: form,
+    });
+  } catch (error) {
+    if (error.message === "Form not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.message === "Only published forms can be closed") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Close form error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+export const reopen = async (req, res) => {
+  try {
+    const form = await reopenForm(req.params.formId, req.user.id);
+
+    return res.status(200).json({
+      success: true,
+      data: form,
+    });
+  } catch (error) {
+    if (error.message === "Form not found") {
+      return res.status(404).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.message === "Only closed forms can be reopened") {
+      return res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    if (error.statusCode === 409) {
+      return res.status(409).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Reopen form error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
+
+export const updateAccess = async (req, res) => {
+  try {
+    const result = await updateFormAccessService(
+      req.params.formId,
+      req.user.id,
+      req.body
+    );
+
+    return res.status(200).json({
+      message: "Form access settings updated successfully",
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        message: error.message,
+      });
+    }
+
+    console.error("Update form access error:", error);
+
+    return res.status(500).json({
+      message: "Internal server error",
+    });
+  }
+};
+
+export const updateIdentityMode = async (req, res) => {
+  try {
+    const result = await updateFormIdentityModeService(
+      req.params.formId,
+      req.user.id,
+      req.body.identityMode
+    );
+
+    return res.status(200).json({
+      success: true,
+      data: result,
+    });
+  } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
+    console.error("Update form identity mode error:", error);
+
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
     });
   }
 };
