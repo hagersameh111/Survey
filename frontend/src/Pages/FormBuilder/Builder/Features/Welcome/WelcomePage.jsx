@@ -2,7 +2,7 @@ import { Clock } from "lucide-react";
 import Breadcrumb from "../../Shared/Breadcrumb";
 import FormHeader from "../../Shared/FormHeader";
 
-const WelcomePage = ({ page = {}, onUpdatePage }) => {
+const WelcomePage = ({ page = {}, access = { type: "open" }, onUpdatePage }) => {
   return (
     <main className="relative flex-1 rounded-2xl bg-surface p-8 shadow-sm border border-border">
       <Breadcrumb />
@@ -17,7 +17,7 @@ const WelcomePage = ({ page = {}, onUpdatePage }) => {
           {page.description || "Your honest input helps us making better decisions in the future. Please share your thoughts, every bit of feedback is appreciated."}
         </p>
 
-        <div className="w-full max-w-xs text-left mb-6">
+        {access.type === "code" && <div className="w-full max-w-xs text-left mb-6">
           <label className="block text-xs font-medium text-text-secondary mb-1 text-center">
             Access Code
           </label>
@@ -27,7 +27,7 @@ const WelcomePage = ({ page = {}, onUpdatePage }) => {
             className="w-full rounded-xl border border-border bg-white p-3 text-sm outline-none text-center"
             disabled
           />
-        </div>
+        </div>}
 
         <button className="rounded-xl bg-primary px-16 py-3.5 font-medium text-white shadow-sm transition hover:bg-primary-hover mb-4">
           Start Now

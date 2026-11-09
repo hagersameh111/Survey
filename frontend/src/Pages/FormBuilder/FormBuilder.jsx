@@ -6,27 +6,34 @@ import BuilderContent from "./Builder/BuilderContent";
 import AnswerSidebar from "./Builder/Features/Questions/components/AnswerSidebar";
 import BioAnswerSidebar from "./Builder/Features/ParticipantBio/components/BioAnswerSidebar";
 import WelcomeSidebar from "./Builder/Features/Welcome/components/WelcomeSidebar";
+import FinishSidebar from "./Builder/Features/Finish/FinishSidebar";
 import PublicForm from "../PublicForm/PublicForm";
-import { createForm, getForm, saveFormBuilder, updateForm } from "../../api/forms";
+import { closeForm, createForm, getForm, publishForm, reopenForm, saveFormBuilder, updateForm, updateFormAccess, updateFormIdentityMode } from "../../api/forms";
 
 const pageDefaults = {
   welcome: { title: "Welcome Page", description: "" },
   participant_info: { title: "Participant Bio", description: "" },
   questions: { title: "Questions Page", description: "" },
-  ending: { title: "Finish Page", description: "" },
+  ending: { title: "Thank you for taking time to complete the survey.", description: "Your honest input helps us making better decisions in the future. Please rate our service, every bit of feedback is appreciated.", buttonText: "Submit", ratingRequired: true, nextForm: {} },
 };
 
 const bioFieldTypes = {
   name: { type: "short_text", question: "Full Name" },
   dob: { type: "date", question: "Date of Birth" },
+  age: { type: "number", question: "Age" },
   email: { type: "email", question: "Email Address" },
   phone: { type: "phone", question: "Phone Number" },
+  nationality: { type: "short_text", question: "Nationality" },
+  country: { type: "short_text", question: "Country" },
+  city: { type: "short_text", question: "City" },
+  gender: { type: "short_text", question: "Gender" },
+  customised: { type: "short_text", question: "Description" },
 };
 
 const getBioFieldKey = (block) => {
   if (block?.data?.fieldKey && bioFieldTypes[block.data.fieldKey]) return block.data.fieldKey;
   const label = block?.data?.question?.trim().toLowerCase();
-  return ({ "full name": "name", "date of birth": "dob", "email address": "email", "phone number": "phone" })[label];
+  return ({ "full name": "name", "date of birth": "dob", age: "age", "email address": "email", "phone number": "phone", nationality: "nationality", country: "country", city: "city", gender: "gender", description: "customised" })[label];
 };
 
 const toEditorType = (type) => ({
@@ -99,7 +106,7 @@ const toBuilderPayload = (questions, savedPages, includeIds = true, pageContent 
           return {
             ...(includeIds && existingBlock?._id ? { id: existingBlock._id } : {}),
             type: field.type,
-            data: { fieldKey: key, question: field.question, required: Boolean(bioFields[key]?.required) },
+            data: { fieldKey: key, question: bioFields[key]?.question || field.question, required: Boolean(bioFields[key]?.required) },
           };
         });
       const customBioBlocks = type === "participant_info"
@@ -115,6 +122,11 @@ const toBuilderPayload = (questions, savedPages, includeIds = true, pageContent 
         type,
         title: content.title ?? existing?.title ?? "",
         description: content.description ?? existing?.description ?? "",
+        ...(type === "ending" ? {
+          buttonText: content.buttonText || "Submit",
+          ratingRequired: content.ratingRequired !== false,
+          nextForm: content.nextForm || {},
+        } : {}),
         blocks: type === "questions" ? questionBlocks : type === "participant_info" ? [...bioBlocks, ...customBioBlocks] : existingBlocks,
       };
     }),
@@ -144,13 +156,16 @@ const FormBuilder = () => {
     themeColor: "#2563EB",
     cardStyle: "rounded",
     progressBar: true,
+    identityMode: "anonymous",
   });
+  const [formAccess, setFormAccess] = useState({ type: "open", code: "" });
+  const [savedAccessType, setSavedAccessType] = useState("open");
+  const [savedIdentityMode, setSavedIdentityMode] = useState("anonymous");
   const [pageContent, setPageContent] = useState(pageDefaults);
   const [bioFields, setBioFields] = useState({
-    name: { enabled: true, required: true },
-    dob: { enabled: true, required: false },
-    email: { enabled: true, required: true },
-    phone: { enabled: true, required: false },
+    name: { enabled: true, required: true }, dob: { enabled: true, required: false }, age: { enabled: false, required: false },
+    email: { enabled: true, required: true }, phone: { enabled: true, required: false }, nationality: { enabled: false, required: false },
+    country: { enabled: false, required: false }, city: { enabled: false, required: false }, gender: { enabled: false, required: false }, customised: { enabled: false, required: false, question: "Description" },
   });
   const [searchParams, setSearchParams] = useSearchParams();
   const [formId, setFormId] = useState(searchParams.get("formId") || pathFormId || null);
@@ -192,18 +207,24 @@ const FormBuilder = () => {
           themeColor: form.settings?.themeColor || "#2563EB",
           cardStyle: form.settings?.cardStyle || "rounded",
           progressBar: form.settings?.progressBar ?? true,
+          identityMode: form.settings?.identityMode || "anonymous",
           ...form.settings,
         });
+        const accessType = form.access?.type || "open";
+        setFormAccess({ type: accessType, code: "" });
+        setSavedAccessType(accessType);
+        setSavedIdentityMode(form.settings?.identityMode || "anonymous");
         setPageContent(Object.fromEntries(Object.keys(pageDefaults).map((type) => {
           const page = pages.find((entry) => entry.type === type);
-          return [type, { title: page?.title ?? pageDefaults[type].title, description: page?.description ?? "" }];
+          const isLegacyFinishTitle = type === "ending" && page?.title === "Finish Page";
+          return [type, { title: isLegacyFinishTitle ? pageDefaults[type].title : page?.title ?? pageDefaults[type].title, description: page?.description || pageDefaults[type].description, ...(type === "ending" ? { buttonText: page?.buttonText || "Submit", ratingRequired: page?.ratingRequired !== false, nextForm: page?.nextForm || {} } : {}) }];
         })));
         const bioPage = pages.find((page) => page.type === "participant_info");
         setBioFields(Object.fromEntries(Object.keys(bioFieldTypes).map((key) => {
           const fieldBlock = bioPage?.blocks?.find((block) => getBioFieldKey(block) === key);
           return [key, fieldBlock
-            ? { enabled: true, required: Boolean(fieldBlock.data?.required) }
-            : { enabled: !(bioPage?.blocks?.length), required: key === "name" || key === "email" }];
+            ? { enabled: true, required: Boolean(fieldBlock.data?.required), ...(key === "customised" ? { question: fieldBlock.data?.question || "Description" } : {}) }
+            : { enabled: !bioPage?.blocks?.length && ["name", "dob", "email", "phone"].includes(key), required: key === "name" || key === "email" }];
         })));
         const questionsPage = pages.find((page) => page.type === "questions");
         const loadedQuestions = (questionsPage?.blocks || []).map((block, index) => ({
@@ -278,7 +299,6 @@ const FormBuilder = () => {
 
   const handleSettingsChange = (key, value) => {
     if (key === "formTitle") setFormTitle(value);
-    else if (key === "status") setStatus(value);
     else setFormSettings((previous) => ({ ...previous, [key]: value }));
   };
 
@@ -301,7 +321,7 @@ const FormBuilder = () => {
     setError("");
     try {
       const copy = await createForm({ title: `${formTitle} (Copy)`, description: formDescription, folder });
-      await updateForm(copy._id, { status, settings: formSettings });
+      await updateForm(copy._id, { settings: formSettings });
       await saveFormBuilder(copy._id, toBuilderPayload(questions, savedPages, false, pageContent, bioFields));
       navigate(`/form-builder?formId=${copy._id}`);
     } catch (err) {
@@ -325,7 +345,22 @@ const FormBuilder = () => {
       const payload = toBuilderPayload(questions, savedPages, true, pageContent, bioFields);
       const savedForm = await saveFormBuilder(activeFormId, payload);
       const savedStatus = publish ? "published" : status;
-      await updateForm(activeFormId, { title: formTitle, description: formDescription, status: savedStatus, settings: formSettings, folder });
+      const { identityMode, ...settingsToSave } = formSettings;
+      await updateForm(activeFormId, { title: formTitle, description: formDescription, folder, settings: settingsToSave });
+      if (identityMode !== savedIdentityMode) {
+        await updateFormIdentityMode(activeFormId, identityMode);
+        setSavedIdentityMode(identityMode);
+      }
+      if (formAccess.type !== savedAccessType) {
+        await updateFormAccess(activeFormId, formAccess.type === "code"
+          ? { type: "code", code: formAccess.code }
+          : { type: "open" });
+        setSavedAccessType(formAccess.type);
+      } else if (formAccess.type === "code" && formAccess.code) {
+        await updateFormAccess(activeFormId, { type: "code", code: formAccess.code });
+      }
+      if (formAccess.code) setFormAccess((previous) => ({ ...previous, code: "" }));
+      if (publish) await publishForm(activeFormId);
       if (publish) setStatus(savedStatus);
       setSavedPages(savedForm.pages || []);
       alert("Form saved successfully!");
@@ -341,6 +376,20 @@ const FormBuilder = () => {
   };
 
   const handlePublish = () => handleSaveToBackend({ openPublish: true, publish: true });
+
+  const handleFormStatus = async (action) => {
+    if (!formId) return;
+    setIsSaving(true);
+    setError("");
+    try {
+      const updated = action === "close" ? await closeForm(formId) : await reopenForm(formId);
+      setStatus(updated.status);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Could not update form status.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   // ------------------------------------------------------------------
   // PREVIEW MODE RENDER
@@ -369,6 +418,9 @@ const FormBuilder = () => {
         onSave={handleSaveToBackend}
         onPublish={handlePublish}
         onDuplicate={handleDuplicate}
+        status={status}
+        onCloseForm={() => handleFormStatus("close")}
+        onReopenForm={() => handleFormStatus("reopen")}
         isSaving={isSaving}
         formUrl={`${window.location.origin}/view?formId=${formId || ""}`}
         publishOpen={publishOpen}
@@ -407,6 +459,9 @@ const FormBuilder = () => {
         pageContent={pageContent}
         bioFields={bioFields}
         settings={{ ...formSettings, formTitle, status }}
+        access={formAccess}
+        status={status}
+        onAccessChange={setFormAccess}
         onSettingsChange={handleSettingsChange}
         onSaveSettings={handleSaveToBackend}
         onUpdatePage={handleUpdatePage}
@@ -418,14 +473,16 @@ const FormBuilder = () => {
 
         {/* Dynamic Right Sidebar Context */}
         {selectedPage === "welcome" ? (
-          <WelcomeSidebar />
+          <WelcomeSidebar page={pageContent.welcome} onUpdatePage={(changes) => handleUpdatePage("welcome", changes)} access={formAccess} onAccessChange={setFormAccess} />
         ) : selectedPage === "bio" ? (
-          <BioAnswerSidebar fields={bioFields} onChange={handleUpdateBioField} />
+          <BioAnswerSidebar fields={bioFields} onChange={handleUpdateBioField} page={pageContent.participant_info} onUpdatePage={(changes) => handleUpdatePage("participant_info", changes)} />
         ) : selectedPage === "questions" ? (
           <AnswerSidebar
             question={questions.find((question) => question.id === selectedQuestionId)}
             onUpdateQuestion={handleUpdateQuestion}
           />
+        ) : selectedPage === "finish" ? (
+          <FinishSidebar page={pageContent.ending} onUpdatePage={(changes) => handleUpdatePage("ending", changes)} currentFormId={formId} />
         ) : (
           <aside className="w-full flex-shrink-0 rounded-3xl bg-[#F8FAFD] p-4 shadow-sm sm:p-6 lg:w-[300px]">
             <h2 className="text-xl font-semibold text-text">Settings</h2>

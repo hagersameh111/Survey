@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { login } from "../../api/auth";
 
 const Login = () => {
@@ -7,6 +7,7 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
  const handleLogin = async (e) => {
     e.preventDefault();
@@ -14,7 +15,8 @@ const Login = () => {
     try {
       const result = await login({ email, password });
       localStorage.setItem("token", result.token);
-      navigate("/dashboard");
+      const returnTo = searchParams.get("returnTo");
+      navigate(returnTo?.startsWith("/") && !returnTo.startsWith("//") ? returnTo : "/dashboard");
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Login failed");
     }

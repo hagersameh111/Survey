@@ -68,6 +68,10 @@ type: {
       default: "",
     },
 
+    buttonText: { type: String, trim: true, maxlength: 100, default: "" },
+    ratingRequired: { type: Boolean, default: true },
+    nextForm: { type: mongoose.Schema.Types.Mixed, default: {} },
+
     order: {
       type: Number,
       required: true,

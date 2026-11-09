@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Plus, Copy, Eye, Settings } from "lucide-react";
 import FormSettingsModal from "../Shared/FormSettingsModal";
 
-const BuilderToolbar = ({ onAddQuestion, onDuplicate, onPreview, settings, onSettingsChange, onSaveSettings }) => {
+const BuilderToolbar = ({ onAddQuestion, onDuplicate, onPreview, settings, access, status, onAccessChange, onSettingsChange, onSaveSettings }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
@@ -40,6 +40,9 @@ const BuilderToolbar = ({ onAddQuestion, onDuplicate, onPreview, settings, onSet
         open={settingsOpen}
         onClose={() => setSettingsOpen(false)}
         settings={settings}
+        access={access}
+        status={status}
+        onAccessChange={onAccessChange}
         onChange={onSettingsChange}
         onSave={async () => {
           const saved = await onSaveSettings();

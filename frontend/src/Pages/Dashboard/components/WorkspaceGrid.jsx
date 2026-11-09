@@ -1,9 +1,9 @@
-import { FileText, Users, ArrowUpRight } from "lucide-react";
+import { FileText, Users, ArrowUpRight, CircleStop, CirclePlay } from "lucide-react";
 import { Link } from "react-router-dom";
 import WorkspaceContextMenu from "./WorkspaceContextMenu";
 import { formatDate } from "./formatDate";
 
-const WorkspaceGrid = ({ forms, onDelete, onDuplicate, onRename, onMove }) => (
+const WorkspaceGrid = ({ forms, onDelete, onDuplicate, onRename, onMove, onClose, onReopen }) => (
   <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
     {forms.map((form) => (
       <div
@@ -16,6 +16,7 @@ const WorkspaceGrid = ({ forms, onDelete, onDuplicate, onRename, onMove }) => (
               <FileText size={24} />
             </div>
             <WorkspaceContextMenu
+              canEdit={form.status === "draft"}
               onRename={() => onRename?.(form)}
               onDuplicate={() => onDuplicate(form)}
               onMove={() => onMove?.(form)}
@@ -39,6 +40,8 @@ const WorkspaceGrid = ({ forms, onDelete, onDuplicate, onRename, onMove }) => (
             <ArrowUpRight size={14} />
           </Link>
         </div>
+        {form.status === "published" && <button type="button" onClick={() => onClose?.(form)} className="mt-3 flex items-center gap-2 self-end text-xs font-medium text-text-secondary hover:text-amber-600"><CircleStop size={14} />Close form</button>}
+        {form.status === "closed" && <button type="button" onClick={() => onReopen?.(form)} className="mt-3 flex items-center gap-2 self-end text-xs font-medium text-primary"><CirclePlay size={14} />Reopen form</button>}
       </div>
     ))}
   </div>

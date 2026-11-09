@@ -5,7 +5,7 @@ import FormsTable from "./components/FormsTable";
 import WorkspaceGrid from "./components/WorkspaceGrid";
 import WorkspaceEmpty from "./components/WorkspaceEmpty";
 import useForms from "../../hooks/useForms.js";
-import { deleteForm, duplicateForm } from "../../api/forms";
+import { closeForm, deleteForm, duplicateForm, reopenForm, updateForm } from "../../api/forms";
 
 export const SORT_OPTIONS = [
   { value: "created_at", label: "Date created", order: "desc" },
@@ -26,6 +26,7 @@ const FolderPage = () => {
   const { folders, refreshFolders } = useOutletContext();
   const [view, setView] = useState("list");
   const [sort, setSort] = useState(SORT_OPTIONS[0]);
+  const [formAction, setFormAction] = useState(null);
 
   const folder = folders.find((f) => f.slug === folderSlug);
   const title = folder?.name ?? folderSlug.replace(/-/g, " ");
@@ -49,6 +50,10 @@ const FolderPage = () => {
   const actions = {
     onDelete: (f) => window.confirm(`Delete "${f.title}"?`) && run(deleteForm, f.id),
     onDuplicate: (f) => run(duplicateForm, f.id),
+    onClose: (f) => run(closeForm, f.id),
+    onReopen: (f) => run(reopenForm, f.id),
+    onRename: (f) => setFormAction({ type: "rename", form: f, value: f.title }),
+    onMove: (f) => setFormAction({ type: "move", form: f, value: f.folder || folderSlug }),
   };
 
   let content;
@@ -77,6 +82,24 @@ const FolderPage = () => {
         onSortChange={setSort}
       />
       {content}
+      {formAction && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
+        <form onSubmit={async (event) => {
+          event.preventDefault();
+          const value = formAction.value.trim();
+          if (!value) return;
+          const changes = formAction.type === "rename" ? { title: value } : { folder: value };
+          await run((id) => updateForm(id, changes), formAction.form.id);
+          setFormAction(null);
+        }} className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl">
+          <h2 className="text-lg font-semibold text-text">{formAction.type === "rename" ? "Rename form" : "Move form"}</h2>
+          <label className="mt-4 block text-sm font-medium text-text" htmlFor="form-action-value">{formAction.type === "rename" ? "Form name" : "Folder name"}</label>
+          <input id="form-action-value" autoFocus maxLength={formAction.type === "rename" ? 200 : 100} value={formAction.value} onChange={(event) => setFormAction((previous) => ({ ...previous, value: event.target.value }))} className="mt-2 w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none focus:border-primary" />
+          <div className="mt-6 flex justify-end gap-3">
+            <button type="button" onClick={() => setFormAction(null)} className="rounded-xl border border-border px-4 py-2.5 text-sm font-medium text-text-secondary hover:bg-background">Cancel</button>
+            <button type="submit" disabled={!formAction.value.trim()} className="rounded-xl bg-primary px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-hover disabled:opacity-50">Save</button>
+          </div>
+        </form>
+      </div>}
     </>
   );
 };

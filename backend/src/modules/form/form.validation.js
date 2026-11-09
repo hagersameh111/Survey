@@ -57,7 +57,7 @@ const validateTextLengthBounds = (data, context) => {
 };
 
 const shortTextDataSchema = z.object({
-  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
+  fieldKey: z.enum(["name", "dob", "age", "email", "phone", "nationality", "country", "city", "gender", "customised"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -76,7 +76,7 @@ const longTextDataSchema = z.object({
 }).superRefine(validateTextLengthBounds);
 
 const emailDataSchema = z.object({
-  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
+  fieldKey: z.enum(["name", "dob", "age", "email", "phone", "nationality", "country", "city", "gender", "customised"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -84,7 +84,7 @@ const emailDataSchema = z.object({
 });
 
 const phoneDataSchema = z.object({
-  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
+  fieldKey: z.enum(["name", "dob", "age", "email", "phone", "nationality", "country", "city", "gender", "customised"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -92,6 +92,7 @@ const phoneDataSchema = z.object({
 });
 
 const numberDataSchema = z.object({
+  fieldKey: z.enum(["age"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -129,7 +130,7 @@ const dateOnlySchema = z.string().refine(isValidDateOnly, {
 });
 
 const dateDataSchema = z.object({
-  fieldKey: z.enum(["name", "dob", "email", "phone"]).optional(),
+  fieldKey: z.enum(["name", "dob", "age", "email", "phone", "nationality", "country", "city", "gender", "customised"]).optional(),
   question: z.string().trim().min(1).max(500),
   description: z.string().trim().max(1000).optional(),
   required: z.boolean().default(false),
@@ -467,6 +468,16 @@ const pageSchema = z.object({
 
   description: z.string().trim().max(1000).optional(),
 
+  buttonText: z.string().trim().max(100).optional(),
+  ratingRequired: z.boolean().optional(),
+  nextForm: z.object({
+    enabled: z.boolean().optional(),
+    formId: z.string().max(100).optional(),
+    formName: z.string().max(200).optional(),
+    url: z.string().max(2000).optional(),
+    buttonText: z.string().max(100).optional(),
+  }).strict().optional(),
+
   order: z.number().int().min(1),
 
   blocks: z.array(blockSchema).default([]),
@@ -491,6 +502,16 @@ const savePageSchema = z.object({
   title: z.string().trim().max(200).optional(),
 
   description: z.string().trim().max(1000).optional(),
+
+  buttonText: z.string().trim().max(100).optional(),
+  ratingRequired: z.boolean().optional(),
+  nextForm: z.object({
+    enabled: z.boolean().optional(),
+    formId: z.string().max(100).optional(),
+    formName: z.string().max(200).optional(),
+    url: z.string().max(2000).optional(),
+    buttonText: z.string().max(100).optional(),
+  }).strict().optional(),
 
   blocks: z.array(saveBlockWithIdSchema).default([]),
 });
@@ -538,6 +559,17 @@ export const updateFormSchema = z.object({
     .optional(),
 
   folder: z.string().trim().min(1).max(100).optional(),
+  settings: z.object({
+    identityMode: z.enum(["anonymous", "identified"]).optional(),
+    formSlug: z.string().trim().max(200).optional(),
+    language: z.string().trim().max(50).optional(),
+    emailNotifications: z.boolean().optional(),
+    collectEmails: z.boolean().optional(),
+    limitOneResponse: z.boolean().optional(),
+    themeColor: z.string().regex(/^#[\da-f]{6}$/i).optional(),
+    cardStyle: z.string().trim().max(50).optional(),
+    progressBar: z.boolean().optional(),
+  }).strict().optional(),
 }).strict();
 
 /*

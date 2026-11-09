@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { ChevronDown } from "lucide-react";
-import SwitchToggle from "./SwitchToggle";
-import { getForms } from "../../../api/forms";
-import { DEFAULT_BUTTON_TEXT, getNextFormUrl } from "./nextForm";
+import SwitchToggle from "../../Shared/SwitchToggle";
+import { getForms } from "../../../../../api/forms";
+import { getNextFormUrl } from "./Nextform.js";
 
 const labelCls = "text-sm text-text-secondary";
 const fieldCls =
@@ -12,7 +12,7 @@ const fieldCls =
 // value    = page.nextForm
 // onChange = receives the new nextForm object
 const FinishPageSettings = ({ value = {}, onChange, currentFormId }) => {
-  const { enabled = false, formId = "", formName = "", buttonText = DEFAULT_BUTTON_TEXT } = value;
+  const { enabled = false, formId = "", formName = "" } = value;
   const [forms, setForms] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | loading | error | ready
 
@@ -48,7 +48,7 @@ const FinishPageSettings = ({ value = {}, onChange, currentFormId }) => {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <span className={labelCls}>Link to another form</span>
+        <span className={labelCls}>Next Survey</span>
         <SwitchToggle checked={enabled} onChange={(v) => update({ enabled: v })} />
       </div>
 
@@ -92,15 +92,6 @@ const FinishPageSettings = ({ value = {}, onChange, currentFormId }) => {
             )}
           </div>
 
-          <div>
-            <label className={`mb-1 block ${labelCls}`}>Button text</label>
-            <input
-              type="text"
-              value={buttonText}
-              onChange={(e) => update({ buttonText: e.target.value })}
-              className={fieldCls}
-            />
-          </div>
         </div>
       )}
     </div>

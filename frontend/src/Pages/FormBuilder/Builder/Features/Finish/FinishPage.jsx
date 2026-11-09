@@ -1,48 +1,20 @@
-import { CheckCircle2 } from "lucide-react";
+import { Star } from "lucide-react";
 import Breadcrumb from "../../Shared/Breadcrumb";
 import FormHeader from "../../Shared/FormHeader";
-import NextFormButton from "./NextFormButton";
-import { isLinked } from "./nextForm";
 
-const FinishPage = ({ page = {}, onUpdatePage }) => {
-  const linked = isLinked(page.nextForm);
-
-  return (
-    <main className="flex-1 rounded-2xl bg-surface p-12 shadow-sm border border-border">
-      <Breadcrumb />
-      <FormHeader title={page.title} description={page.description} onChange={onUpdatePage} />
-
-      <div className="mx-auto flex max-w-2xl flex-col items-center justify-center py-20 text-center min-h-[500px]">
-        <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-primary-light text-primary">
-          <CheckCircle2 size={40} />
-        </div>
-
-        <h1 className="mb-4 text-3xl font-bold text-text">
-          {page.title || "Thank you for your feedback!"}
-        </h1>
-
-        <p className="mb-8 text-lg text-text-secondary">
-          {page.description ||
-            (linked
-              ? "Thanks for completing this form. One more step is waiting for you."
-              : "Your response has been successfully recorded. You may now close this window or submit another response.")}
-        </p>
-
-        {linked ? (
-          <>
-            <NextFormButton nextForm={page.nextForm} preview />
-            {page.nextForm.formName && (
-              <p className="mt-3 text-sm text-text-muted">Next: {page.nextForm.formName}</p>
-            )}
-          </>
-        ) : (
-          <button className="rounded-xl bg-primary px-8 py-4 font-semibold text-white transition hover:bg-primary-hover">
-            Submit Another Response
-          </button>
-        )}
+const FinishPage = ({ page = {}, onUpdatePage }) => (
+  <main className="flex-1 rounded-2xl border border-border bg-surface p-8 shadow-sm">
+    <Breadcrumb />
+    <FormHeader title={page.title} description={page.description} onChange={onUpdatePage} />
+    <div className="flex min-h-[500px] flex-col items-center justify-center rounded-2xl bg-[#F7F8FC] px-6 py-16 text-center">
+      <h1 className="mb-5 max-w-3xl text-2xl font-bold text-primary">{page.title || "Thank you for taking time to complete the survey."}</h1>
+      <p className="mb-8 max-w-3xl text-lg leading-relaxed text-text">{page.description || "Your honest input helps us making better decisions in the future. Please rate our service, every bit of feedback is appreciated."}</p>
+      <div className="mb-10 flex items-center gap-3" aria-label="Five star rating preview">
+        {Array.from({ length: 5 }, (_, index) => <Star key={index} size={48} strokeWidth={1.5} className="text-primary/40" />)}
       </div>
-    </main>
-  );
-};
+      <button type="button" className="min-w-64 rounded-xl bg-primary px-14 py-4 font-medium text-white shadow-sm">{page.buttonText || "Submit"}</button>
+    </div>
+  </main>
+);
 
 export default FinishPage;

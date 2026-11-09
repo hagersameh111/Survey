@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { LayoutGrid, Copy, Check, ScanLine, Users, Pencil, Trash2 } from "lucide-react";
+import { LayoutGrid, Copy, Check, ScanLine, Users, Pencil, Trash2, CircleStop, CirclePlay } from "lucide-react";
 import WorkspaceContextMenu from "./WorkspaceContextMenu";
 import { formatDate } from "./formatDate";
 
@@ -23,7 +23,7 @@ const CopyButton = ({ text }) => {
   );
 };
 
-const FormsTable = ({ forms, onDelete, onDuplicate, onRename, onMove }) => (
+const FormsTable = ({ forms, onDelete, onDuplicate, onRename, onMove, onClose, onReopen }) => (
   <div className="mt-6 overflow-x-auto">
     <div className="min-w-[900px]">
       <div className={`${COLS} px-2 pb-3 text-sm text-text-secondary`}>
@@ -79,7 +79,10 @@ const FormsTable = ({ forms, onDelete, onDuplicate, onRename, onMove }) => (
                 <button aria-label="Delete" onClick={() => onDelete(form)} className="hover:text-red-600">
                   <Trash2 size={16} />
                 </button>
+                {form.status === "published" && <button type="button" aria-label="Close form" title="Close form" onClick={() => onClose(form)} className="hover:text-amber-600"><CircleStop size={16} /></button>}
+                {form.status === "closed" && <button type="button" aria-label="Reopen form" title="Reopen form" onClick={() => onReopen(form)} className="hover:text-primary"><CirclePlay size={16} /></button>}
                 <WorkspaceContextMenu
+                  canEdit={form.status === "draft"}
                   onRename={() => onRename?.(form)}
                   onDuplicate={() => onDuplicate(form)}
                   onMove={() => onMove?.(form)}

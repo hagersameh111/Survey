@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Clock3, User, Calendar, Mail, Phone, CheckCircle2 } from "lucide-react";
-import { getPublicForm, submitFormResponse } from "../../api/forms";
+import { getPublicForm, issueParticipantToken, submitFormResponse } from "../../api/forms";
 
 const PublicForm = ({ questions: previewQuestions, bioFields: previewBioFields }) => {
   const [searchParams] = useSearchParams();
@@ -10,6 +10,7 @@ const PublicForm = ({ questions: previewQuestions, bioFields: previewBioFields }
   const [formError, setFormError] = useState("");
   const [submitError, setSubmitError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [participantToken, setParticipantToken] = useState("");
   const [currentStep, setCurrentStep] = useState("welcome"); // 'welcome' -> 'bio' -> 'questions' -> 'finish'
   
   // State for form responses
@@ -128,7 +129,7 @@ const PublicForm = ({ questions: previewQuestions, bioFields: previewBioFields }
             maxLength={block.type === "short_text" || block.type === "long_text" ? data.maxLength : undefined}
             placeholder={data.placeholder || "Type your answer here..."}
             value={value}
-            onChange={(event) => handleAnswerChange(questionId, event.target.value)}
+            onChange={(event) => handleAnswerChange(questionId, block.type === "number" && event.target.value !== "" ? Number(event.target.value) : event.target.value)}
             className={`w-full rounded-xl border border-border bg-background p-3 text-sm outline-none focus:border-primary ${block.type === "long_text" ? "min-h-28" : ""}`}
           />
         )}
@@ -169,9 +170,32 @@ const PublicForm = ({ questions: previewQuestions, bioFields: previewBioFields }
       setSubmitError("Save this form before submitting a response.");
       return;
     }
+    if (form?.identityMode === "identified" && !localStorage.getItem("token")) {
+      setSubmitError("This form requires you to sign in before submitting.");
+      return;
+    }
     setIsSubmitting(true);
     try {
-      await submitFormResponse(formId, { participant: bioData, answers });
+      const needsParticipantToken = form?.identityMode !== "identified";
+      const token = needsParticipantToken
+        ? participantToken || await issueParticipantToken(formId)
+        : "";
+      if (token) setParticipantToken(token);
+      const fieldKeys = { "Full Name": "name", "Date of Birth": "dob", "Email Address": "email", "Phone Number": "phone" };
+      const answerEntries = [
+        ...participantBlocks
+          .map((block) => ({ block, key: block.data?.fieldKey || fieldKeys[block.data?.question] }))
+          .filter(({ block, key }) => block._id && key && bioData[key])
+          .map(({ block, key }) => ({ questionId: block._id, value: bioData[key] })),
+        ...Object.entries(answers).map(([questionId, value]) => {
+          const question = formQuestions.find((block) => String(block._id) === questionId);
+          return {
+            questionId,
+            value: question?.type === "number" && value !== "" ? Number(value) : value,
+          };
+        }),
+      ];
+      await submitFormResponse(formId, { answers: answerEntries }, token);
       setCurrentStep("finish");
     } catch (error) {
       setSubmitError(error.response?.data?.message || "Your response could not be saved. Please try again.");
@@ -191,7 +215,10 @@ const PublicForm = ({ questions: previewQuestions, bioFields: previewBioFields }
       {/* Main Container Card */}
       <main className="mx-auto max-w-2xl w-full rounded-3xl bg-white p-8 md:p-12 shadow-sm border border-border">
         {formError && <div role="alert" className="mb-6 rounded-xl bg-red-50 p-3 text-sm text-red-700">{formError}</div>}
-        {submitError && <div role="alert" className="mb-6 rounded-xl bg-red-50 p-3 text-sm text-red-700">{submitError}</div>}
+        {submitError && <div role="alert" className="mb-6 rounded-xl bg-red-50 p-3 text-sm text-red-700">
+          {submitError}
+          {form?.identityMode === "identified" && !localStorage.getItem("token") && <Link className="ml-1 font-semibold underline" to={`/?returnTo=${encodeURIComponent(`${window.location.pathname}${window.location.search}`)}`}>Sign in</Link>}
+        </div>}
         
         {/* STEP 1: WELCOME PAGE */}
         {currentStep === "welcome" && (

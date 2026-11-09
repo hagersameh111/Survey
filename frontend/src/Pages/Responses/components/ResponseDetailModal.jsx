@@ -1,17 +1,12 @@
 import React, { useState } from "react";
 import { Grid, List, X } from "lucide-react";
 
-const ResponseDetailModal = ({ isOpen, onClose, respondentName = "Ahmed Said", completedCount = 15, totalCount = 15, responses = [] }) => {
+const ResponseDetailModal = ({ isOpen, onClose, respondentName = "Respondent", completedCount = 0, totalCount = 0, responses = [], loading = false, error = "" }) => {
   const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'list'
 
   if (!isOpen) return null;
 
-  // Fallback mock questions matching your layout if no props are passed
-  const displayResponses = responses.length > 0 ? responses : Array.from({ length: 15 }, (_, index) => ({
-    id: index + 1,
-    question: index === 1 || index === 6 || index === 11 ? "Lorem ipsum dolor sit amet consectetur. Netus amet massa et ut consectetur scelerisque fringilla orci." : "Untitled Question",
-    answer: "Option 2",
-  }));
+  const displayResponses = responses;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4">
@@ -65,6 +60,8 @@ const ResponseDetailModal = ({ isOpen, onClose, respondentName = "Ahmed Said", c
 
         {/* Modal Content Scroll Area */}
         <div className="p-8 overflow-y-auto bg-gray-50/50 flex-1">
+          {loading && <p className="text-sm text-gray-500">Loading response…</p>}
+          {error && <p role="alert" className="text-sm text-red-600">{error}</p>}
           <div
             className={`grid gap-5 ${
               viewMode === "grid"
@@ -85,6 +82,7 @@ const ResponseDetailModal = ({ isOpen, onClose, respondentName = "Ahmed Said", c
                 </div>
               </div>
             ))}
+            {!loading && !error && displayResponses.length === 0 && <p className="text-sm text-gray-500">No answers were recorded.</p>}
           </div>
         </div>
 

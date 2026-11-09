@@ -14,6 +14,39 @@ import {
   updateFormIdentityMode as updateFormIdentityModeService,
   deleteForm as deleteFormService,
 } from "./form.service.js";
+import Form from "./form.model.js";
+import Response from "../response/response.model.js";
+
+export const getFolders = async (req, res) => {
+  try {
+    const forms = await Form.find({ owner: req.user.id }).select("folder status").lean();
+    const counts = new Map();
+    forms.forEach(({ folder }) => counts.set(folder || "my-workspace", (counts.get(folder || "my-workspace") || 0) + 1));
+    const slugs = new Set(["my-workspace", "drafts", ...counts.keys()]);
+    const data = [...slugs].map((slug) => ({
+      id: slug,
+      slug,
+      name: slug.split("-").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" "),
+      section: "private",
+      formsCount: slug === "drafts" ? forms.filter((form) => form.status === "draft").length : counts.get(slug) || 0,
+    }));
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    console.error("Get folders error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const getResponseStats = async (req, res) => {
+  try {
+    const forms = await Form.find({ owner: req.user.id }).select("_id").lean();
+    const collected = await Response.countDocuments({ form: { $in: forms.map((form) => form._id) } });
+    return res.status(200).json({ success: true, data: { collected, limit: 100 } });
+  } catch (error) {
+    console.error("Get response stats error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
 
 export const create = async (req, res) => {
   try {

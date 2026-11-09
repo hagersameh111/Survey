@@ -110,6 +110,9 @@ export const duplicateForm = async (formId, userId) => {
       type: page.type,
       title: page.title,
       description: page.description,
+      buttonText: page.buttonText,
+      ratingRequired: page.ratingRequired,
+      nextForm: structuredClone(page.nextForm || {}),
       order: page.order,
       blocks: page.blocks.map((block) => ({
         type: block.type,
@@ -190,6 +193,9 @@ const toPublicFormDto = (form) => ({
       type: page.type,
       title: page.title,
       description: page.description,
+      buttonText: page.buttonText,
+      ratingRequired: page.ratingRequired,
+      nextForm: structuredClone(page.nextForm || {}),
       order: page.order,
       blocks: [...page.blocks]
         .sort((left, right) => left.order - right.order)
@@ -280,6 +286,10 @@ export const updateForm = async (formId, userId, formData) => {
 
   if (formData.folder !== undefined) {
     form.folder = formData.folder;
+  }
+
+  if (formData.settings !== undefined) {
+    form.settings = { ...form.settings?.toObject?.(), ...formData.settings };
   }
 
   await saveForm(form);
@@ -555,6 +565,9 @@ export const saveBuilder = async (formId, userId, builderData) => {
     page.type = pageData.type;
     page.title = pageData.title || "";
     page.description = pageData.description || "";
+    page.buttonText = pageData.buttonText || "";
+    page.ratingRequired = pageData.ratingRequired !== false;
+    page.nextForm = pageData.nextForm || {};
 
     // Order comes from array position
     page.order = pageIndex + 1;

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronLeft,
   ChevronDown,
@@ -9,6 +9,7 @@ import {
   Check,
 } from "lucide-react";
 import { Link } from "react-router-dom"; 
+import { getCurrentUser } from "../../api/auth";
 
 /* -------------------------------------------------------------------------- */
 /*  Data                                                                       */
@@ -188,21 +189,33 @@ function FreePlanCard({ showViewPlans = false }) {
 /* -------------------------------------------------------------------------- */
 
 function AccountSettingsPage() {
+  const [user, setUser] = useState(null);
+  const [loadError, setLoadError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    getCurrentUser()
+      .then((currentUser) => { if (active) setUser(currentUser); })
+      .catch((error) => { if (active) setLoadError(error.response?.data?.message || "Could not load account details."); });
+    return () => { active = false; };
+  }, []);
+
+  const accountName = user ? `${user.firstName} ${user.lastName}` : "Loading account…";
+
   return (
     <>
       <PageHeader
         title="Account settings"
-        description="Change your organization name and URL, set up custom email settings."
+        description="View the account details associated with your sign-in."
       />
+
+      {loadError && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{loadError}</p>}
 
       <div className="space-y-2">
         <Card>
           <div className="flex items-center gap-3">
-            <Avatar />
-            <span className="text-lg text-slate-800">Username88</span>
-          </div>
-          <div className="mt-4">
-            <SoftButton>Change name</SoftButton>
+            {user?.avatar ? <img src={user.avatar} alt="" className="h-10 w-10 rounded-full object-cover" /> : <Avatar />}
+            <div><p className="text-lg text-slate-800">{accountName}</p>{user?.email && <p className="text-sm text-slate-500">{user.email}</p>}</div>
           </div>
         </Card>
 

@@ -1,5 +1,5 @@
 import { ArrowRight } from "lucide-react";
-import { DEFAULT_BUTTON_TEXT, isLinked } from "./nextForm";
+import { DEFAULT_BUTTON_TEXT, isLinked } from "./Nextform.js";
 
 // Use `preview` inside the builder so clicking doesn't leave the editor.
 // Use it without `preview` on the real public finish page.

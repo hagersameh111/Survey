@@ -28,7 +28,7 @@ const questionTypes = [
   { id: "divider", title: "Divider", icon: Minus, color: "bg-[#F4FAF8]" },
 ];
 
-const QuestionsPage = ({ questions = [], page, onUpdatePage, settings, onSettingsChange, onSaveSettings, onAddQuestion, onDeleteQuestion, onUpdateQuestion, onMoveQuestion, onDuplicate, onPreview }) => {
+const QuestionsPage = ({ questions = [], page, settings, access, status, onAccessChange, onUpdatePage, onSettingsChange, onSaveSettings, onAddQuestion, onDeleteQuestion, onUpdateQuestion, onMoveQuestion, onDuplicate, onPreview }) => {
   const [isAdding, setIsAdding] = useState(false);
 
   const handleAdd = (type) => {
@@ -40,7 +40,7 @@ const QuestionsPage = ({ questions = [], page, onUpdatePage, settings, onSetting
     <main className="relative flex-1 rounded-2xl bg-surface p-8 shadow-sm">
       <Breadcrumb />
       <FormHeader title={page?.title} description={page?.description} onChange={onUpdatePage} />
-      <BuilderToolbar onAddQuestion={() => setIsAdding(true)} onDuplicate={onDuplicate} onPreview={onPreview} settings={settings} onSettingsChange={onSettingsChange} onSaveSettings={onSaveSettings} />
+      <BuilderToolbar onAddQuestion={() => setIsAdding(true)} onDuplicate={onDuplicate} onPreview={onPreview} settings={settings} access={access} status={status} onAccessChange={onAccessChange} onSettingsChange={onSettingsChange} onSaveSettings={onSaveSettings} />
 
       {questions.length === 0 ? (
         <div className="mt-6 flex flex-col items-center justify-center rounded-2xl bg-[#F4F6F9] py-24">

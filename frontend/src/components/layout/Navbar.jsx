@@ -17,18 +17,13 @@ const menuItems = [
   { title: "All Members", path: "/admin" },
 ];
 
-const Navbar = ({
-  user = {
-    username: "Username88",
-    role: "Admin",
-    avatar: "https://i.pravatar.cc/150?img=12",
-  },
-}) => {
+const Navbar = ({ user = { username: "Username88", role: "Admin", avatar: "https://i.pravatar.cc/150?img=12" } }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const menuRef = useRef(null);
   const location = useLocation();
   const navigate = useNavigate();
+  const username = user.username;
 
   const handleLogout = () => {
     setMenuOpen(false);
@@ -91,13 +86,9 @@ const Navbar = ({
             to="/account-settings"
             className="flex items-center gap-3 transition hover:opacity-80"
           >
-            <img
-              src={user.avatar}
-              alt={user.username}
-              className="h-10 w-10 rounded-full object-cover"
-            />
+            <img src={user.avatar} alt={username} className="h-10 w-10 rounded-full object-cover" />
             <span className="hidden font-medium text-text transition hover:text-primary sm:inline">
-              {user.username}
+              {username}
             </span>
           </Link>
 

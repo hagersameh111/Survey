@@ -2,7 +2,7 @@ import { useState } from "react";
 import { X, Settings, Globe, Shield, Bell } from "lucide-react";
 import SwitchToggle from "./SwitchToggle";
 
-const FormSettingsModal = ({ open, onClose, settings = {}, onChange = () => {}, onSave = () => {} }) => {
+const FormSettingsModal = ({ open, onClose, settings = {}, access = { type: "open", code: "" }, status = "draft", onAccessChange = () => {}, onChange = () => {}, onSave = () => {} }) => {
   const [activeTab, setActiveTab] = useState("general");
 
   if (!open) return null;
@@ -100,13 +100,9 @@ const FormSettingsModal = ({ open, onClose, settings = {}, onChange = () => {}, 
                   </select>
                 </div>
 
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-text">Form Status</label>
-                  <select value={settings.status || "draft"} onChange={(e) => onChange("status", e.target.value)} className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none focus:border-primary">
-                    <option value="draft">Draft</option>
-                    <option value="published">Published</option>
-                    <option value="closed">Closed</option>
-                  </select>
+                <div className="rounded-xl border border-border bg-background p-3">
+                  <p className="text-sm font-medium text-text">Form status</p>
+                  <p className="mt-1 text-sm capitalize text-text-secondary">{status}</p>
                 </div>
 
                 <div>
@@ -130,6 +126,23 @@ const FormSettingsModal = ({ open, onClose, settings = {}, onChange = () => {}, 
 
             {activeTab === "security" && (
               <div className="space-y-6">
+                {status !== "draft" && <p className="rounded-xl bg-amber-50 p-3 text-xs text-amber-800">Access and identity settings can only be changed while the form is a draft.</p>}
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text">Who can respond?</label>
+                  <select disabled={status !== "draft"} value={settings.identityMode || "anonymous"} onChange={(e) => onChange("identityMode", e.target.value)} className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none focus:border-primary disabled:opacity-60">
+                    <option value="anonymous">Anonymous respondents</option>
+                    <option value="identified">Signed-in respondents</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-text">Form access</label>
+                  <select disabled={status !== "draft"} value={access.type || "open"} onChange={(e) => onAccessChange({ ...access, type: e.target.value, code: "" })} className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none focus:border-primary disabled:opacity-60">
+                    <option value="open">Anyone with the link</option>
+                    <option value="code">Require an access code</option>
+                  </select>
+                  {access.type === "code" && <input disabled={status !== "draft"} type="password" autoComplete="new-password" value={access.code || ""} onChange={(e) => onAccessChange({ ...access, code: e.target.value })} placeholder="Enter a code (4–64 characters)" minLength={4} maxLength={64} className="mt-3 w-full rounded-xl border border-border bg-background p-3 text-sm text-text outline-none focus:border-primary disabled:opacity-60" />}
+                  {access.type === "code" && <p className="mt-2 text-xs text-amber-800">The backend can save this access code, but public links currently only load forms with open access.</p>}
+                </div>
                 <div className="flex items-center justify-between">
                   <div>
                     <h4 className="text-sm font-medium text-text">Collect Email Addresses</h4>
@@ -182,7 +195,8 @@ const FormSettingsModal = ({ open, onClose, settings = {}, onChange = () => {}, 
           </button>
           <button
             onClick={onSave}
-            className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-hover"
+            disabled={status !== "draft"}
+            className="rounded-xl bg-primary px-6 py-2.5 text-sm font-medium text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             Save Changes
           </button>

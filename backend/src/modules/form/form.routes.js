@@ -13,6 +13,8 @@ import {
   updateAccess,
   updateIdentityMode,
   remove,
+  getFolders,
+  getResponseStats,
 } from "./form.controller.js";
 
 import { auth } from "../../middlewares/auth.middleware.js";
@@ -44,6 +46,8 @@ const validateFormId = (req, res, next) => {
 };
 
 router.get("/", auth, getAll);
+router.get("/folders", auth, getFolders);
+router.get("/stats/responses", auth, getResponseStats);
 
 router.post(
   "/",
