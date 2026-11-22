@@ -1,15 +1,23 @@
 import { useEffect, useState } from "react";
 import {
   ChevronLeft,
-  ChevronDown,
   ChevronsUpDown,
   UserPlus,
   Search,
   Globe,
   Check,
 } from "lucide-react";
-import { Link } from "react-router-dom"; 
+import { Link } from "react-router-dom";
 import { getCurrentUser } from "../../api/auth";
+import { useWorkspace } from "../../context/WorkspaceContext.jsx";
+import {
+  getWorkspaceMembers,
+  removeWorkspaceMember,
+  getPendingInvitations,
+  revokeInvitation,
+} from "../../api/workspaces";
+import InviteMembersModal from "../../components/modals/InviteMembersModal.jsx";
+import { PLAN_LIMITS, PLAN_LABELS } from "../../config/plans.js";
 
 /* -------------------------------------------------------------------------- */
 /*  Data                                                                       */
@@ -19,10 +27,6 @@ const NAV_ITEMS = [
   { id: "account", label: "Account settings" },
   { id: "members", label: "Members" },
   { id: "billing", label: "Plan & billing" },
-];
-
-const MEMBERS = [
-  { id: 1, name: "Username88", email: "username88@mail.com", role: "Owner" },
 ];
 
 const PLAN_FEATURES = [
@@ -249,41 +253,98 @@ function AccountSettingsPage() {
 }
 
 function MembersPage() {
+  const { activeWorkspaceId, activeWorkspace } = useWorkspace();
   const [query, setQuery] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
+  const [members, setMembers] = useState([]);
+  const [invitations, setInvitations] = useState([]);
+  const [loadError, setLoadError] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [showInviteModal, setShowInviteModal] = useState(false);
 
-  const seatsUsed = MEMBERS.length;
-  const seatsTotal = 1;
+  const load = () => {
+    if (!activeWorkspaceId) return;
+    setLoading(true);
+    setLoadError("");
+    Promise.all([getWorkspaceMembers(activeWorkspaceId), getPendingInvitations(activeWorkspaceId)])
+      .then(([memberList, invitationList]) => {
+        setMembers(memberList);
+        setInvitations(invitationList);
+      })
+      .catch((error) => setLoadError(error.response?.data?.message || "Could not load members."))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(load, [activeWorkspaceId]);
+
+  if (!activeWorkspaceId) {
+    return (
+      <>
+        <PageHeader title="Members" description="Invite people and assign workspace roles." />
+        <Card>
+          <p className="text-sm text-slate-600">
+            You're viewing your Personal account, which has no team members. Switch to a team workspace from the switcher in the top bar, or create one, to manage members.
+          </p>
+        </Card>
+      </>
+    );
+  }
+
+  const seatsUsed = members.filter((member) => member.role !== "owner").length;
+  const seatsTotal = PLAN_LIMITS[activeWorkspace?.plan]?.maxInvitedMembers ?? 0;
 
   const q = query.trim().toLowerCase();
-  const visible = MEMBERS.filter(
-    (m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q)
-  ).sort((a, b) =>
-    sortAsc ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name)
-  );
+  const memberName = (member) => `${member.user?.firstName || ""} ${member.user?.lastName || ""}`.trim();
+  const visible = members
+    .filter((member) => memberName(member).toLowerCase().includes(q) || (member.user?.email || "").toLowerCase().includes(q))
+    .sort((a, b) => (sortAsc ? memberName(a).localeCompare(memberName(b)) : memberName(b).localeCompare(memberName(a))));
+
+  const handleRemove = async (member) => {
+    if (!window.confirm(`Remove ${memberName(member)} from this workspace?`)) return;
+    try {
+      await removeWorkspaceMember(activeWorkspaceId, member.user._id);
+      load();
+    } catch (error) {
+      alert(error.response?.data?.message || "Could not remove this member.");
+    }
+  };
+
+  const handleRevoke = async (invitation) => {
+    if (!window.confirm(`Revoke the invitation for ${invitation.email}?`)) return;
+    try {
+      await revokeInvitation(activeWorkspaceId, invitation._id);
+      load();
+    } catch (error) {
+      alert(error.response?.data?.message || "Could not revoke this invitation.");
+    }
+  };
 
   return (
     <>
       <PageHeader
         title="Members"
-        description="Invite people and assign organization roles."
+        description={`Invite people and assign roles in ${activeWorkspace?.name || "this workspace"}.`}
       />
 
+      {loadError && <p role="alert" className="mb-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">{loadError}</p>}
+
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <PrimaryButton icon={UserPlus}>Invite members</PrimaryButton>
+        <PrimaryButton icon={UserPlus} onClick={() => setShowInviteModal(true)}>
+          Invite members
+        </PrimaryButton>
 
         <div className="w-full sm:w-64">
           <div className="flex items-baseline justify-between text-sm">
-            <span className="text-slate-600">Editor seats</span>
+            <span className="text-slate-600">Invited-member seats</span>
             <span>
               <span className="font-semibold text-slate-900">{seatsUsed}</span>
-              <span className="text-xs text-slate-500"> /{seatsTotal}</span>
+              <span className="text-xs text-slate-500"> /{Number.isFinite(seatsTotal) ? seatsTotal : "∞"}</span>
             </span>
           </div>
           <div className="mt-2 h-1 w-full rounded-full bg-slate-100">
             <div
               className="h-1 rounded-full bg-blue-800"
-              style={{ width: `${Math.min(100, (seatsUsed / seatsTotal) * 100)}%` }}
+              style={{ width: `${Number.isFinite(seatsTotal) && seatsTotal > 0 ? Math.min(100, (seatsUsed / seatsTotal) * 100) : 0}%` }}
             />
           </div>
         </div>
@@ -292,7 +353,7 @@ function MembersPage() {
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h2 className="text-lg text-slate-800">
-            Organization members ({MEMBERS.length})
+            Workspace members ({members.length})
           </h2>
 
           <label className="relative block w-full sm:w-96">
@@ -323,41 +384,125 @@ function MembersPage() {
           </button>
         </div>
 
+        {loading && <p className="py-8 text-center text-sm text-slate-500">Loading members…</p>}
+
         <ul>
-          {visible.map((m) => (
-            <li key={m.id} className="flex items-center justify-between gap-4 py-5">
+          {!loading && visible.map((member) => (
+            <li key={member.membershipId} className="flex items-center justify-between gap-4 py-5">
               <div className="flex items-center gap-3">
                 <Avatar size="lg" />
                 <div>
-                  <p className="text-sm text-slate-800">{m.name}</p>
-                  <p className="text-sm text-slate-600">{m.email}</p>
+                  <p className="text-sm text-slate-800">{memberName(member) || member.user?.email}</p>
+                  <p className="text-sm text-slate-600">{member.user?.email}</p>
                 </div>
               </div>
 
-              <button
-                type="button"
-                disabled
-                className="inline-flex cursor-not-allowed items-center gap-6 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-400"
-                aria-label={`Role: ${m.role} (cannot be changed)`}
-              >
-                {m.role}
-                <ChevronDown className="h-4 w-4" strokeWidth={1.75} />
-              </button>
+              <div className="flex items-center gap-3">
+                <span className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm capitalize text-slate-600">
+                  {member.role}
+                </span>
+                {member.role !== "owner" && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemove(member)}
+                    className={`rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 ${focusRing}`}
+                  >
+                    Remove
+                  </button>
+                )}
+              </div>
             </li>
           ))}
 
-          {visible.length === 0 && (
+          {!loading && visible.length === 0 && (
             <li className="py-8 text-center text-sm text-slate-500">
               No members match “{query}”. Try a different name or email.
             </li>
           )}
         </ul>
       </Card>
+
+      {invitations.length > 0 && (
+        <Card className="mt-4">
+          <h2 className="text-lg text-slate-800">Pending invitations ({invitations.length})</h2>
+          <ul className="mt-4 divide-y divide-slate-100">
+            {invitations.map((invitation) => (
+              <li key={invitation._id} className="flex items-center justify-between gap-4 py-4">
+                <div>
+                  <p className="text-sm text-slate-800">{invitation.email}</p>
+                  <p className="text-xs capitalize text-slate-500">{invitation.role} · expires {new Date(invitation.expiresAt).toLocaleDateString()}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleRevoke(invitation)}
+                  className={`rounded-lg px-3 py-2 text-sm text-red-600 transition-colors hover:bg-red-50 ${focusRing}`}
+                >
+                  Revoke
+                </button>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
+
+      <InviteMembersModal
+        open={showInviteModal}
+        onClose={() => {
+          setShowInviteModal(false);
+          load();
+        }}
+        workspaceId={activeWorkspaceId}
+        workspaceName={activeWorkspace?.name}
+      />
     </>
   );
 }
 
+function WorkspacePlanCard({ workspace }) {
+  const limits = PLAN_LIMITS[workspace.plan] || {};
+  const surveysUsed = workspace.activeSurveyCount ?? 0;
+  const surveysLimit = limits.maxActiveSurveys;
+  const pct = Number.isFinite(surveysLimit) && surveysLimit > 0 ? Math.min(100, (surveysUsed / surveysLimit) * 100) : 0;
+  const isActive = workspace.subscriptionStatus === "active";
+
+  return (
+    <Card>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-base font-semibold text-slate-800">
+            {PLAN_LABELS[workspace.plan] || workspace.plan} — {workspace.name || "Untitled workspace"}
+          </h2>
+          <p className="text-sm text-slate-600">
+            {isActive
+              ? "This workspace's subscription is active."
+              : "This workspace is pending activation. No payment provider is connected yet — an operator must activate its subscription before Shared surveys can be published or members invited."}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-4 border-t border-slate-100 pt-4">
+        <div className="flex items-center justify-between text-sm">
+          <span className="text-slate-800">Active Shared surveys</span>
+          <span className="text-slate-800">
+            <span className="font-semibold">{surveysUsed}</span>
+            <span className="text-xs text-slate-500"> / {Number.isFinite(surveysLimit) ? surveysLimit : "unlimited"}</span>
+          </span>
+        </div>
+        <div className="mt-3 h-3 w-full overflow-hidden rounded bg-slate-100">
+          <div className="h-full rounded bg-blue-800" style={{ width: `${pct}%` }} />
+        </div>
+      </div>
+
+      <div className="mt-4 border-t border-slate-100 pt-4 text-sm text-slate-600">
+        Invited members: {workspace.activeMemberCount ?? 0} / {Number.isFinite(limits.maxInvitedMembers) ? limits.maxInvitedMembers : "unlimited"}
+      </div>
+    </Card>
+  );
+}
+
 function PlanBillingPage() {
+  const { activeWorkspaceId, activeWorkspace } = useWorkspace();
+
   return (
     <>
       <PageHeader
@@ -366,7 +511,11 @@ function PlanBillingPage() {
       />
 
       <div className="space-y-4">
-        <FreePlanCard showViewPlans />
+        {activeWorkspaceId && activeWorkspace ? (
+          <WorkspacePlanCard workspace={activeWorkspace} />
+        ) : (
+          <FreePlanCard showViewPlans />
+        )}
 
         <Card>
           <h2 className="text-lg text-slate-800">Billing details</h2>
