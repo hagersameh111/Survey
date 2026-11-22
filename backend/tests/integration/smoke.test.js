@@ -6,6 +6,7 @@ import app from "../../src/app.js";
 import Form from "../../src/modules/form/form.model.js";
 import { publishForm, saveBuilder } from "../../src/modules/form/form.service.js";
 import Response from "../../src/modules/response/response.model.js";
+import User from "../../src/modules/user/user.model.js";
 import { startTestDatabase, stopTestDatabase } from "../support/mongo-memory.js";
 
 const TEST_SECRET = "phase-two-integration-test-secret";
@@ -19,6 +20,18 @@ describe("isolated integration setup", () => {
     testDatabaseUri = await startTestDatabase();
     await Form.init();
     await Response.init();
+    await User.init();
+    // publishForm's Free-plan Private-survey quota is enforced against a
+    // real User document (see user-write-fence.js's incrementUserCounter),
+    // so this fixture's fixed `ownerId` needs a backing User row — it never
+    // had one before that feature existed.
+    await User.create({
+      _id: ownerId,
+      firstName: "Smoke",
+      lastName: "Owner",
+      email: "smoke-owner@example.test",
+      password: "test-password-123",
+    });
     previousJwtSecret = process.env.JWT_SECRET;
     process.env.JWT_SECRET = TEST_SECRET;
   });

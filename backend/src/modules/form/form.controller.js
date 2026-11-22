@@ -19,7 +19,7 @@ import Response from "../response/response.model.js";
 
 export const getFolders = async (req, res) => {
   try {
-    const forms = await Form.find({ owner: req.user.id }).select("folder status").lean();
+    const forms = await Form.find({ owner: req.user.id, visibility: "private" }).select("folder status").lean();
     const counts = new Map();
     forms.forEach(({ folder }) => counts.set(folder || "my-workspace", (counts.get(folder || "my-workspace") || 0) + 1));
     const slugs = new Set(["my-workspace", "drafts", ...counts.keys()]);
@@ -39,7 +39,7 @@ export const getFolders = async (req, res) => {
 
 export const getResponseStats = async (req, res) => {
   try {
-    const forms = await Form.find({ owner: req.user.id }).select("_id").lean();
+    const forms = await Form.find({ owner: req.user.id, visibility: "private" }).select("_id").lean();
     const collected = await Response.countDocuments({ form: { $in: forms.map((form) => form._id) } });
     return res.status(200).json({ success: true, data: { collected, limit: 100 } });
   } catch (error) {
@@ -57,6 +57,14 @@ export const create = async (req, res) => {
       data: form,
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+        ...(error.reasonCode ? { code: error.reasonCode } : {}),
+      });
+    }
+
     return res.status(500).json({
       success: false,
       message: error.message,
@@ -99,6 +107,13 @@ export const getAll = async (req, res) => {
       data: forms,
     });
   } catch (error) {
+    if (error.statusCode) {
+      return res.status(error.statusCode).json({
+        success: false,
+        message: error.message,
+      });
+    }
+
     console.error("Get all forms error:", error);
 
     return res.status(500).json({
@@ -258,6 +273,13 @@ export const publish = async (req, res) => {
       });
     }
 
+    if (error.statusCode === 403) {
+      return res.status(403).json({
+        message: error.message,
+        ...(error.reasonCode ? { code: error.reasonCode } : {}),
+      });
+    }
+
     if (error.details) {
       return res.status(400).json({
         message: error.message,
@@ -347,6 +369,14 @@ export const reopen = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: error.message,
+      });
+    }
+
+    if (error.statusCode === 403) {
+      return res.status(403).json({
+        success: false,
+        message: error.message,
+        ...(error.reasonCode ? { code: error.reasonCode } : {}),
       });
     }
 

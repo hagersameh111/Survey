@@ -1,7 +1,7 @@
 import { FileText, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
 
-const WorkspaceEmpty = ({ folderName, folderSlug }) => (
+const WorkspaceEmpty = ({ folderName, folderSlug, createHref }) => (
   <div className="flex min-h-[450px] flex-col items-center justify-center text-center">
     <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-primary-light">
       <FileText size={36} className="text-primary" />
@@ -13,7 +13,7 @@ const WorkspaceEmpty = ({ folderName, folderSlug }) => (
     </p>
 
     <Link
-      to={`/form-builder?folder=${folderSlug}`}
+      to={createHref || `/form-builder?folder=${folderSlug}`}
       className="flex items-center gap-2 rounded-xl bg-primary px-8 py-4 text-lg text-white transition hover:bg-primary-hover"
     >
       <Plus size={20} />

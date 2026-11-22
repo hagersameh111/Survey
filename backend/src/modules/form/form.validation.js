@@ -536,6 +536,9 @@ export const createFormSchema = z.object({
     .optional(),
 
   folder: z.string().trim().min(1).max(100).optional(),
+
+  visibility: z.enum(["private", "shared"]).optional(),
+  workspaceId: z.string().regex(/^[a-f\d]{24}$/i, "Invalid workspace ID").optional(),
 });
 
 /*

@@ -70,8 +70,8 @@ export const getFolders = async (signal) => {
   }));
 };
 
-export const getForms = async ({ folder, sort, order }, signal) => {
-  const { data } = await api.get("/forms", { params: { folder, sort, order }, signal });
+export const getForms = async ({ folder, sort, order, workspaceId }, signal) => {
+  const { data } = await api.get("/forms", { params: { folder, sort, order, workspaceId }, signal });
   return (data.data ?? []).map(normalizeForm);
 };
 
