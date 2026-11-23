@@ -9,7 +9,7 @@ export const issue = async (req, res) => {
       data: { participantToken },
     });
   } catch (error) {
-    if ([404, 409].includes(error.statusCode)) {
+    if ([403, 404, 409].includes(error.statusCode)) {
       return res.status(error.statusCode).json({
         success: false,
         message: error.statusCode === 404 ? "Form not found" : error.message,

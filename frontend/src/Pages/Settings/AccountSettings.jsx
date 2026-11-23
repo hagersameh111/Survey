@@ -9,7 +9,8 @@ import {
   Check,
 } from "lucide-react";
 import { Link } from "react-router-dom"; 
-import { getCurrentUser } from "../../api/auth";
+import { useAuth } from "../../context/AuthContext";
+import InviteMembersModal from "../../components/modals/InviteMembersModal";
 
 /* -------------------------------------------------------------------------- */
 /*  Data                                                                       */
@@ -51,30 +52,6 @@ function PrimaryButton({ children, icon: Icon, ...props }) {
       {...props}
     >
       {Icon && <Icon className="h-4 w-4" strokeWidth={1.75} />}
-      {children}
-    </button>
-  );
-}
-
-function SoftButton({ children, ...props }) {
-  return (
-    <button
-      type="button"
-      className={`inline-flex items-center rounded-lg border border-blue-100 bg-blue-50 px-3.5 py-2 text-sm text-slate-600 transition-colors hover:bg-blue-100 ${focusRing}`}
-      {...props}
-    >
-      {children}
-    </button>
-  );
-}
-
-function OutlineButton({ children, ...props }) {
-  return (
-    <button
-      type="button"
-      className={`inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600 transition-colors hover:bg-slate-50 ${focusRing}`}
-      {...props}
-    >
       {children}
     </button>
   );
@@ -144,8 +121,8 @@ function FreePlanCard({ showViewPlans = false }) {
     </p>
   </div>
   {showViewPlans && (
-    <Link to="/pricing">
-      <SoftButton>View Plans</SoftButton>
+    <Link to="/pricing" className={`inline-flex items-center rounded-lg border border-blue-100 bg-blue-50 px-3.5 py-2 text-sm text-slate-600 transition-colors hover:bg-blue-100 ${focusRing}`}>
+      View Plans
     </Link>
   )}
 </div>
@@ -178,7 +155,9 @@ function FreePlanCard({ showViewPlans = false }) {
       </div>
 
       <div className="mt-4 border-t border-slate-100 pt-4">
-        <PrimaryButton>Upgrade</PrimaryButton>
+        <Link to="/pricing" className="inline-flex items-center gap-2 rounded-lg bg-blue-800 px-3 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-900">
+          Upgrade
+        </Link>
       </div>
     </Card>
   );
@@ -189,18 +168,18 @@ function FreePlanCard({ showViewPlans = false }) {
 /* -------------------------------------------------------------------------- */
 
 function AccountSettingsPage() {
-  const [user, setUser] = useState(null);
   const [loadError, setLoadError] = useState("");
+  const { user, isLoading, refreshUser } = useAuth();
 
   useEffect(() => {
     let active = true;
-    getCurrentUser()
-      .then((currentUser) => { if (active) setUser(currentUser); })
+    refreshUser()
+      .then(() => { if (active) setLoadError(""); })
       .catch((error) => { if (active) setLoadError(error.response?.data?.message || "Could not load account details."); });
     return () => { active = false; };
-  }, []);
+  }, [refreshUser]);
 
-  const accountName = user ? `${user.firstName} ${user.lastName}` : "Loading account…";
+  const accountName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email : isLoading ? "Loading account…" : "Account";
 
   return (
     <>
@@ -232,12 +211,7 @@ function AccountSettingsPage() {
                   Default
                 </span>
               </div>
-              <button
-                type="button"
-                className={`rounded px-2 py-1 text-sm text-slate-600 hover:text-slate-900 ${focusRing}`}
-              >
-                Change
-              </button>
+              <span className="text-xs text-slate-500">Only language available</span>
             </div>
           </div>
         </Card>
@@ -251,6 +225,7 @@ function AccountSettingsPage() {
 function MembersPage() {
   const [query, setQuery] = useState("");
   const [sortAsc, setSortAsc] = useState(true);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const seatsUsed = MEMBERS.length;
   const seatsTotal = 1;
@@ -270,7 +245,7 @@ function MembersPage() {
       />
 
       <div className="mb-8 flex flex-wrap items-center justify-between gap-4">
-        <PrimaryButton icon={UserPlus}>Invite members</PrimaryButton>
+        <PrimaryButton icon={UserPlus} onClick={() => setInviteOpen(true)}>Invite members</PrimaryButton>
 
         <div className="w-full sm:w-64">
           <div className="flex items-baseline justify-between text-sm">
@@ -353,6 +328,7 @@ function MembersPage() {
           )}
         </ul>
       </Card>
+      <InviteMembersModal open={inviteOpen} onClose={() => setInviteOpen(false)} />
     </>
   );
 }
@@ -373,9 +349,7 @@ function PlanBillingPage() {
           <p className="mt-4 text-sm text-slate-600">
             You haven't added any billing information yet
           </p>
-          <div className="mt-4">
-            <OutlineButton>Edit billing details</OutlineButton>
-          </div>
+          <p className="mt-4 text-xs text-slate-500">Billing details are managed by the workspace owner.</p>
         </Card>
 
         <Card>
@@ -386,9 +360,7 @@ function PlanBillingPage() {
           <p className="mt-4 text-sm text-slate-600">
             You haven't added any billing information yet
           </p>
-          <div className="mt-4">
-            <PrimaryButton>Add payment method</PrimaryButton>
-          </div>
+          <p className="mt-4 text-xs text-slate-500">Payment method management is not available yet.</p>
         </Card>
 
         <Card>
@@ -450,13 +422,13 @@ export default function OrganizationSettings() {
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800 antialiased">
       <div className="mx-auto max-w-screen px-4 py-6 sm:px-6">
-        <a
-          href="#workspaces"
+        <Link
+          to="/dashboard"
           className={`mb-4 inline-flex items-center gap-2 rounded text-sm text-slate-700 hover:text-slate-900 ${focusRing}`}
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2} />
           Workspaces
-        </a>
+        </Link>
 
         <div className="flex flex-col gap-6 md:flex-row md:gap-8">
           <Sidebar active={page} onChange={setPage} />

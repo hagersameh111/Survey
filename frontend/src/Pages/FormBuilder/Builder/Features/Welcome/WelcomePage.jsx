@@ -1,12 +1,10 @@
 import { Clock } from "lucide-react";
 import Breadcrumb from "../../Shared/Breadcrumb";
-import FormHeader from "../../Shared/FormHeader";
 
-const WelcomePage = ({ page = {}, access = { type: "open" }, onUpdatePage }) => {
+const WelcomePage = ({ page = {}, access = { type: "open" } }) => {
   return (
     <main className="relative flex-1 rounded-2xl bg-surface p-8 shadow-sm border border-border">
       <Breadcrumb />
-      <FormHeader title={page.title} description={page.description} onChange={onUpdatePage} />
       
       <div className="flex flex-col items-center justify-center p-12 text-center min-h-[500px]">
         <h1 className="text-2xl font-bold text-primary mb-4">
@@ -29,26 +27,17 @@ const WelcomePage = ({ page = {}, access = { type: "open" }, onUpdatePage }) => 
           />
         </div>}
 
-        <button className="rounded-xl bg-primary px-16 py-3.5 font-medium text-white shadow-sm transition hover:bg-primary-hover mb-4">
-          Start Now
-        </button>
-
-        <div className="flex items-center justify-center gap-2 text-primary text-sm font-medium mb-12">
-          <Clock size={16} />
-          <span>Takes 10 min.</span>
+        <div aria-hidden="true" className="rounded-xl bg-primary px-16 py-3.5 font-medium text-white shadow-sm mb-4">
+          {page.buttonText || "Start Now"}
         </div>
 
-        <div className="mt-8 pt-6 w-full max-w-lg">
+        {page.config?.timeEnabled !== false && <div className="flex items-center justify-center gap-2 text-primary text-sm font-medium mb-12"><Clock size={16} /><span>Takes {page.config?.time || "10 minutes"}.</span></div>}
+
+        {page.config?.contactEnabled !== false && (page.config?.contactEmail || page.config?.contactDescription) && <div className="mt-8 pt-6 w-full max-w-lg border-t border-border">
           <h4 className="font-semibold text-text text-sm mb-1">Contact Details:</h4>
-          <a href="mailto:admin12345@mail.com" className="text-primary text-sm underline hover:opacity-80 transition">
-            admin12345@mail.com
-          </a>
-          <p className="text-xs text-text-muted mt-6 leading-relaxed">
-            If you wish to make a formal complaint regarding this research, you may contact the
-            Academic Supervisor. Your communication may also be referred to an independent
-            person, where appropriate.
-          </p>
-        </div>
+          {page.config?.contactEmail && <a href={`mailto:${page.config.contactEmail}`} className="text-primary text-sm underline hover:opacity-80 transition">{page.config.contactEmail}</a>}
+          {page.config?.contactDescription && <p className="text-xs text-text-muted mt-6 leading-relaxed">{page.config.contactDescription}</p>}
+        </div>}
       </div>
     </main>
   );

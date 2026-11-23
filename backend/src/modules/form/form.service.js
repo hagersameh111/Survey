@@ -104,6 +104,7 @@ export const duplicateForm = async (formId, userId) => {
     description: sourceForm.description,
     status: "draft",
     settings: {
+      ...structuredClone(sourceForm.settings?.toObject?.() ?? sourceForm.settings ?? {}),
       identityMode: getIdentityMode(sourceForm.settings?.identityMode),
     },
     pages: sourceForm.pages.map((page) => ({
@@ -111,6 +112,7 @@ export const duplicateForm = async (formId, userId) => {
       title: page.title,
       description: page.description,
       buttonText: page.buttonText,
+      config: structuredClone(page.config || {}),
       ratingRequired: page.ratingRequired,
       nextForm: structuredClone(page.nextForm || {}),
       order: page.order,
@@ -181,11 +183,20 @@ export const deleteForm = async (formId, userId) => {
   }
 };
 
+const isSafeRedirectUrl = (value) => {
+  try {
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol);
+  } catch { return false; }
+};
+
 const toPublicFormDto = (form) => ({
   _id: form._id.toString(),
   title: form.title,
   description: form.description,
   identityMode: getIdentityMode(form.settings?.identityMode),
+  status: form.status,
+  settings: structuredClone(form.settings?.toObject?.() ?? form.settings ?? {}),
   pages: [...form.pages]
     .sort((left, right) => left.order - right.order)
     .map((page) => ({
@@ -194,8 +205,15 @@ const toPublicFormDto = (form) => ({
       title: page.title,
       description: page.description,
       buttonText: page.buttonText,
+      config: structuredClone(page.config || {}),
       ratingRequired: page.ratingRequired,
-      nextForm: structuredClone(page.nextForm || {}),
+      nextForm: (() => {
+        const config = structuredClone(page.nextForm || {});
+        if (config.enabled && config.url && !isSafeRedirectUrl(config.url)) {
+          throw new Error("Published Form contains an invalid redirect URL");
+        }
+        return config;
+      })(),
       order: page.order,
       blocks: [...page.blocks]
         .sort((left, right) => left.order - right.order)
@@ -223,14 +241,24 @@ export const getPublicFormById = async (formId) => {
     !/^[a-f\d]{24}$/i.test(formId) ||
     !mongoose.isValidObjectId(formId)
   ) {
-    return null;
+    const error = new Error("Invalid form ID");
+    error.statusCode = 400;
+    throw error;
   }
 
-  const form = await Form.findOne({
-    _id: formId,
-    status: "published",
-    "access.type": "open",
-  });
+  const form = await Form.findById(formId);
+  if (!form) return null;
+  if (form.status !== "published") {
+    const messages = { draft: "This survey is not published", paused: "This survey is paused", closed: "This survey is closed", expired: "This survey has expired" };
+    const error = new Error(messages[form.status] || "This survey is unavailable");
+    error.statusCode = 403;
+    throw error;
+  }
+  if (form.access?.type !== "open") {
+    const error = new Error("This survey is not publicly accessible");
+    error.statusCode = 403;
+    throw error;
+  }
 
   return form ? toPublicFormDto(form) : null;
 };
@@ -566,6 +594,7 @@ export const saveBuilder = async (formId, userId, builderData) => {
     page.title = pageData.title || "";
     page.description = pageData.description || "";
     page.buttonText = pageData.buttonText || "";
+    page.config = pageData.config || {};
     page.ratingRequired = pageData.ratingRequired !== false;
     page.nextForm = pageData.nextForm || {};
 
@@ -816,6 +845,24 @@ export const closeForm = async (formId, userId) => {
   return form;
 };
 
+export const pauseForm = async (formId, userId) => {
+  const form = await Form.findOne({ _id: formId, owner: userId });
+  if (!form) throw new Error("Form not found");
+  if (form.status !== "published") throw new Error("Only published forms can be paused");
+  form.status = "paused";
+  await saveForm(form);
+  return form;
+};
+
+export const resumeForm = async (formId, userId) => {
+  const form = await Form.findOne({ _id: formId, owner: userId });
+  if (!form) throw new Error("Form not found");
+  if (form.status !== "paused") throw new Error("Only paused forms can be resumed");
+  form.status = "published";
+  await saveForm(form);
+  return form;
+};
+
 export const reopenForm = async (formId, userId) => {
   const form = await Form.findOne({
     _id: formId,
@@ -860,6 +907,7 @@ export const updateFormAccess = async (formId, userId, accessData) => {
   if (accessData.type === "open") {
     form.access = {
       type: "open",
+      multipleUse: Boolean(accessData.multipleUse),
       codeHash: undefined,
     };
   } else {
@@ -867,6 +915,7 @@ export const updateFormAccess = async (formId, userId, accessData) => {
 
     form.access = {
       type: "code",
+      multipleUse: Boolean(accessData.multipleUse),
       codeHash,
     };
   }

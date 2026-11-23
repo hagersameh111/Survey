@@ -1,7 +1,7 @@
 import RowLayout from "./RowLayout";
 import UrlInput from "./UrlInput";
 
-const UrlRow = ({ row, onChange, onSwap, onShorten, onQr, onSave }) => (
+const UrlRow = ({ row, onChange, onSwap, onShorten, onQr, onSave, busy }) => (
   <RowLayout
     row={row}
     onChange={onChange}
@@ -12,6 +12,7 @@ const UrlRow = ({ row, onChange, onSwap, onShorten, onQr, onSave }) => (
     actionLabel="Shorten URL"
     actionDisabled={!row.longUrl.trim()}
     onAction={onShorten}
+    busy={busy}
   />
 );
 

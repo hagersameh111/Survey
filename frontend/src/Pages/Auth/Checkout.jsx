@@ -4,9 +4,11 @@ import { Link } from "react-router-dom";
 const Checkout = () => {
   const [name, setName] = useState("");
   const [cardNumber, setCardNumber] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleCheckout = (e) => {
     e.preventDefault();
+    setMessage("Payment processing is not connected yet. No payment was made.");
   };
 
   return (
@@ -17,6 +19,7 @@ const Checkout = () => {
         <div className="rounded-3xl bg-white p-8 shadow-sm border border-gray-100">
           <h2 className="text-2xl font-bold text-gray-900 mb-6">Payment Details</h2>
           <form onSubmit={handleCheckout} className="space-y-5">
+            {message && <p role="status" className="rounded-xl bg-amber-50 p-3 text-sm text-amber-800">{message}</p>}
             <div>
               <label className="mb-2 block text-sm font-medium text-gray-700">Name on Card</label>
               <input
@@ -66,6 +69,8 @@ const Checkout = () => {
             </button>
           </form>
         </div>
+
+        <Link to="/plans" className="text-sm font-medium text-primary hover:underline">Back to plans</Link>
 
         {/* Order Summary */}
         <div className="rounded-3xl bg-gray-900 p-8 text-white shadow-xl h-fit">

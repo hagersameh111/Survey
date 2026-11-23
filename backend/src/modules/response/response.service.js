@@ -7,6 +7,7 @@ import {
   findParticipantTokenForSubmission,
   markParticipantTokenConsumed,
   isValidParticipantToken,
+  hashParticipantToken,
 } from "./participant-token.service.js";
 import Response from "./response.model.js";
 import {
@@ -61,6 +62,7 @@ const toResponseDetailDto = (response) => {
   const result = {
     responseId: response._id.toString(),
     submittedAt: response.submittedAt,
+    finalRating: response.finalRating,
     participantInfo: (response.participantInfo ?? []).map(toAnswerDto),
     answers: (response.answers ?? []).map(toAnswerDto),
   };
@@ -106,13 +108,84 @@ export const listResponsesForForm = async (formId, ownerId, { page, limit, sort 
 export const getResponseForForm = async (formId, responseId, ownerId) => {
   const form = await getOwnedForm(formId, ownerId);
   const response = await Response.findOne({ _id: responseId, form: form._id })
-    .select("_id submittedAt participantInfo participant answers");
+    .select("_id submittedAt participantInfo participant answers finalRating");
 
   if (!response) {
     throw createServiceError("Response not found", 404);
   }
 
-  return toResponseDetailDto(response);
+  const labels = new Map((form.pages || []).flatMap((page) => (page.blocks || []).map((block) => [String(block._id), {
+    title: block.data?.question || block.data?.text || "Response",
+    type: block.type,
+  }])));
+  const result = toResponseDetailDto(response);
+  for (const collection of [result.participantInfo, result.answers]) {
+    for (const answer of collection) {
+      const question = labels.get(answer.questionId);
+      if (question) {
+        answer.question = question.title;
+        answer.type = question.type;
+      }
+      answer.displayValue = Array.isArray(answer.value) ? answer.value.join(", ") : String(answer.value ?? "");
+    }
+  }
+  if (result.finalRating !== undefined && (form.pages || []).some((page) => page.type === "ending" && page.ratingRequired !== false)) {
+    result.answers.push({ questionId: "finish-rating", value: result.finalRating, question: "Overall rating", type: "rating", displayValue: String(result.finalRating) });
+  }
+  return result;
+};
+
+export const exportResponsesForForm = async (formId, ownerId) => {
+  const form = await getOwnedForm(formId, ownerId);
+  const responses = await Response.find({ form: form._id }).sort({ submittedAt: 1, _id: 1 });
+  const orderedBlocks = [...(form.pages || [])].sort((a, b) => a.order - b.order).flatMap((page) => [...(page.blocks || [])].sort((a, b) => a.order - b.order));
+  const labels = new Map(orderedBlocks.map((block) => [String(block._id), {
+    title: block.data?.question || block.data?.text || "Response",
+    type: block.type,
+  }]));
+  const data = responses.map((response) => {
+    const result = toResponseDetailDto(response);
+    for (const collection of [result.participantInfo, result.answers]) {
+      for (const answer of collection) {
+        const question = labels.get(answer.questionId);
+        if (question) {
+          answer.question = question.title;
+          answer.type = question.type;
+        }
+        answer.displayValue = Array.isArray(answer.value) ? answer.value.join(", ") : String(answer.value ?? "");
+      }
+    }
+    return result;
+  });
+  const questions = orderedBlocks
+    .filter((block) => labels.has(String(block._id)) && block.data?.question)
+    .map((block) => ({ questionId: String(block._id), title: labels.get(String(block._id)).title }));
+  if ((form.pages || []).some((page) => page.type === "ending" && page.ratingRequired !== false)) {
+    questions.push({ questionId: "finish-rating", title: "Overall rating" });
+    for (const response of data) {
+      if (response.finalRating !== undefined) {
+        response.answers.push({ questionId: "finish-rating", value: response.finalRating, question: "Overall rating", type: "rating", displayValue: String(response.finalRating) });
+      }
+    }
+  }
+  return { questions, responses: data };
+};
+
+export const saveFinalRating = async (formId, responseId, rating, context = {}) => {
+  if (!mongoose.isValidObjectId(formId) || !mongoose.isValidObjectId(responseId)) throw createServiceError("Invalid form or response ID", 400);
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) throw createServiceError("Rating must be from 1 to 5", 400);
+  const form = await Form.findById(formId);
+  if (!form) throw createServiceError("Form not found", 404);
+  if (form.settings?.identityMode === "identified") {
+    if (!mongoose.isValidObjectId(context.userId)) throw createServiceError("Authentication is required for this form", 401);
+    const response = await Response.findOneAndUpdate({ _id: responseId, form: form._id, respondentUser: context.userId }, { $set: { finalRating: rating } }, { new: true });
+    if (!response) throw createServiceError("Response not found", 404);
+    return { rating: response.finalRating };
+  }
+  if (!isValidParticipantToken(context.participantToken)) throw createServiceError("A valid participant token is required", 401);
+  const response = await Response.findOneAndUpdate({ _id: responseId, form: form._id, participantTokenHash: hashParticipantToken(context.participantToken) }, { $set: { finalRating: rating } }, { new: true });
+  if (!response) throw createServiceError("Response not found", 404);
+  return { rating: response.finalRating };
 };
 
 const getIdentityMode = (form) => {
@@ -281,11 +354,24 @@ export const submitResponse = async (formId, submission, context = {}) => {
     throw createServiceError("Form not found", 404);
   }
 
-  if (form.status !== "published" || form.access?.type !== "open") {
-    throw createServiceError("Form not found", 404);
+  if (form.status !== "published") {
+    const messages = { draft: "This survey is not published", paused: "This survey is paused", closed: "This survey is closed", expired: "This survey has expired" };
+    throw createServiceError(messages[form.status] || "This survey is unavailable", 403);
+  }
+  if (form.access?.type !== "open") {
+    throw createServiceError("This survey is not publicly accessible", 403);
   }
 
   const identityMode = getIdentityMode(form);
+  const endingPage = (form.pages || []).find((page) => page.type === "ending");
+  const redirectUrl = endingPage?.nextForm?.url;
+  if (endingPage?.nextForm?.enabled && endingPage.nextForm.redirectEnabled !== false && redirectUrl) {
+    let parsedRedirect;
+    try { parsedRedirect = new URL(redirectUrl); } catch { throw createServiceError("Configured redirect URL is invalid", 500); }
+    if (!["http:", "https:"].includes(parsedRedirect.protocol)) {
+      throw createServiceError("Configured redirect URL is invalid", 500);
+    }
+  }
   const { identity, participantToken } = await getTrustedIdentity(identityMode, form._id, context);
   const questionsById = new Map();
 
@@ -475,5 +561,8 @@ export const submitResponse = async (formId, submission, context = {}) => {
     throw createServiceError("A response has already been submitted for this form", 409);
   }
 
-  return transactionResult;
+  const redirect = endingPage?.nextForm?.enabled && endingPage.nextForm.redirectEnabled !== false && endingPage.nextForm?.url
+    ? { enabled: true, url: endingPage.nextForm.url, buttonText: endingPage.nextForm.buttonText || "Continue" }
+    : { enabled: false, url: "", buttonText: endingPage?.nextForm?.buttonText || "" };
+  return { ...transactionResult, redirect };
 };

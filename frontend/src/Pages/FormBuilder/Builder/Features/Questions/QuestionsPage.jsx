@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Plus, List as ListIcon, Type, CheckSquare, ChevronDown, AlignLeft, Star, AtSign, Phone, Hash, CalendarDays, Circle, Heading1, FileText, Image as ImageIcon, Minus } from "lucide-react";
 import Breadcrumb from "../../Shared/Breadcrumb";
 import FormHeader from "../../Shared/FormHeader";
@@ -30,6 +30,19 @@ const questionTypes = [
 
 const QuestionsPage = ({ questions = [], page, settings, access, status, onAccessChange, onUpdatePage, onSettingsChange, onSaveSettings, onAddQuestion, onDeleteQuestion, onUpdateQuestion, onMoveQuestion, onDuplicate, onPreview }) => {
   const [isAdding, setIsAdding] = useState(false);
+  const addPanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!isAdding) return undefined;
+    const closeOnEscape = (event) => { if (event.key === "Escape") setIsAdding(false); };
+    const closeOutside = (event) => { if (addPanelRef.current && !addPanelRef.current.contains(event.target)) setIsAdding(false); };
+    document.addEventListener("keydown", closeOnEscape);
+    document.addEventListener("pointerdown", closeOutside);
+    return () => {
+      document.removeEventListener("keydown", closeOnEscape);
+      document.removeEventListener("pointerdown", closeOutside);
+    };
+  }, [isAdding]);
 
   const handleAdd = (type) => {
     onAddQuestion(type);
@@ -57,7 +70,7 @@ const QuestionsPage = ({ questions = [], page, settings, access, status, onAcces
               Add Question
             </button>
           ) : (
-            <div className="mt-4 grid w-full max-w-[760px] grid-cols-2 gap-3 rounded-2xl border border-dashed border-border bg-white p-3 shadow-sm sm:grid-cols-3">
+            <div ref={addPanelRef} className="mt-4 grid w-full max-w-[760px] grid-cols-2 gap-3 rounded-2xl border border-dashed border-border bg-white p-3 shadow-sm sm:grid-cols-3">
               {questionTypes.map((q) => (
                 <QuestionTypeCard key={q.id} {...q} onClick={() => handleAdd(q.id)} />
               ))}
@@ -74,7 +87,7 @@ const QuestionsPage = ({ questions = [], page, settings, access, status, onAcces
               index: index + 1,
               onDelete: () => onDeleteQuestion(id),
               onChange: (changes) => onUpdateQuestion(id, changes),
-              onAddOption: () => onUpdateQuestion(id, { options: [...(q.options || []), { label: `Option ${(q.options || []).length + 1}` }] }),
+              onAddOption: () => onUpdateQuestion(id, { options: [...(q.options || []), { label: "" }] }),
               onDeleteOption: (optionIndex) => {
                 if ((q.options || []).length > 1) onUpdateQuestion(id, { options: q.options.filter((_, i) => i !== optionIndex) });
               },
@@ -84,7 +97,7 @@ const QuestionsPage = ({ questions = [], page, settings, access, status, onAcces
             };
 
             if (["heading", "text", "image", "divider"].includes(type)) return <ContentBlockCard {...cardProps} type={type} />;
-            if (["multiple", "multiple-choice", "single-choice", "checkbox", "dropdown"].includes(type)) return <MultipleChoiceCard {...cardProps} />;
+            if (["multiple", "multiple-choice", "single-choice", "checkbox", "dropdown"].includes(type)) return <MultipleChoiceCard {...cardProps} questionType={type} />;
             if (["short", "short-answer", "paragraph", "email", "phone", "number", "date"].includes(type)) return <ShortAnswerCard {...cardProps} isParagraph={type === "paragraph"} inputType={type} />;
             if (type === "rating") return <RatingCard {...cardProps} />;
             return null;
@@ -99,7 +112,7 @@ const QuestionsPage = ({ questions = [], page, settings, access, status, onAcces
               Add question
             </button>
           ) : (
-            <div className="mt-6 w-full rounded-2xl border border-dashed border-primary bg-white p-3 shadow-sm">
+            <div ref={addPanelRef} className="mt-6 w-full rounded-2xl border border-dashed border-primary bg-white p-3 shadow-sm">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {questionTypes.map((q) => (
                   <QuestionTypeCard key={q.id} {...q} onClick={() => handleAdd(q.id)} />

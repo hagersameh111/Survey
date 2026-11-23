@@ -69,6 +69,7 @@ type: {
     },
 
     buttonText: { type: String, trim: true, maxlength: 100, default: "" },
+    config: { type: mongoose.Schema.Types.Mixed, default: {} },
     ratingRequired: { type: Boolean, default: true },
     nextForm: { type: mongoose.Schema.Types.Mixed, default: {} },
 
@@ -95,6 +96,8 @@ const accessSchema = new mongoose.Schema(
       default: "open",
       required: true,
     },
+
+    multipleUse: { type: Boolean, default: false },
 
     codeHash: {
       type: String,
@@ -155,7 +158,7 @@ const formSchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["draft", "published", "closed"],
+      enum: ["draft", "published", "paused", "closed", "expired"],
       default: "draft",
     },
 

@@ -12,11 +12,13 @@ export const formIdSchema = z.string().regex(/^[a-f\d]{24}$/i, "Invalid form ID"
 export const formAccessSchema = z.discriminatedUnion("type", [
     z.object({
     type: z.literal("open"),
+    multipleUse: z.boolean().optional(),
   }),
 
   z.object({
     type: z.literal("code"),
     code: z.string().trim().min(4).max(64),
+    multipleUse: z.boolean().optional(),
   }),
 ]);
 
@@ -469,12 +471,20 @@ const pageSchema = z.object({
   description: z.string().trim().max(1000).optional(),
 
   buttonText: z.string().trim().max(100).optional(),
+  config: z.object({
+    timeEnabled: z.boolean().optional(),
+    time: z.string().trim().max(100).optional(),
+    contactEnabled: z.boolean().optional(),
+    contactEmail: z.string().trim().email().or(z.literal("")).optional(),
+    contactDescription: z.string().trim().max(2000).optional(),
+  }).strict().optional(),
   ratingRequired: z.boolean().optional(),
   nextForm: z.object({
     enabled: z.boolean().optional(),
+    redirectEnabled: z.boolean().optional(),
     formId: z.string().max(100).optional(),
     formName: z.string().max(200).optional(),
-    url: z.string().max(2000).optional(),
+    url: z.string().max(2000).refine((value) => value === "" || /^https?:\/\//i.test(value) && z.string().url().safeParse(value).success, "Redirect URL must use http or https").optional(),
     buttonText: z.string().max(100).optional(),
   }).strict().optional(),
 
@@ -504,12 +514,20 @@ const savePageSchema = z.object({
   description: z.string().trim().max(1000).optional(),
 
   buttonText: z.string().trim().max(100).optional(),
+  config: z.object({
+    timeEnabled: z.boolean().optional(),
+    time: z.string().trim().max(100).optional(),
+    contactEnabled: z.boolean().optional(),
+    contactEmail: z.string().trim().email().or(z.literal("")).optional(),
+    contactDescription: z.string().trim().max(2000).optional(),
+  }).strict().optional(),
   ratingRequired: z.boolean().optional(),
   nextForm: z.object({
     enabled: z.boolean().optional(),
+    redirectEnabled: z.boolean().optional(),
     formId: z.string().max(100).optional(),
     formName: z.string().max(200).optional(),
-    url: z.string().max(2000).optional(),
+    url: z.string().max(2000).refine((value) => value === "" || /^https?:\/\//i.test(value) && z.string().url().safeParse(value).success, "Redirect URL must use http or https").optional(),
     buttonText: z.string().max(100).optional(),
   }).strict().optional(),
 

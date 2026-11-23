@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { NavLink, Link, useLocation, useNavigate } from "react-router-dom";
+import { NavLink, Link, useNavigate } from "react-router-dom";
 import { FileText, Users, Link2, ChevronRight, UserPlus, LogOut } from "lucide-react";
 import InviteMembersModal from "../modals/InviteMembersModal";
+import { useAuth } from "../../context/AuthContext";
 
 import logo from "/logo.png";
 // import logo from "../../assets/images/logo.png";
@@ -17,20 +18,21 @@ const menuItems = [
   { title: "All Members", path: "/admin" },
 ];
 
-const Navbar = ({ user = { username: "Username88", role: "Admin", avatar: "https://i.pravatar.cc/150?img=12" } }) => {
+const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showInviteModal, setShowInviteModal] = useState(false);
   const menuRef = useRef(null);
-  const location = useLocation();
   const navigate = useNavigate();
-  const username = user.username;
+  const { user, logout } = useAuth();
+  const username = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email : "Account";
+  const initials = username.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+  const role = user?.role ? user.role[0].toUpperCase() + user.role.slice(1) : "";
 
   const handleLogout = () => {
     setMenuOpen(false);
-    // Clear whatever your login stores. Change "token" if you use another key.
-    localStorage.removeItem("token");
+    logout();
     sessionStorage.clear();
-    navigate("/", { replace: true }); // "/" is your Login route
+    navigate("/login", { replace: true });
   };
 
   // Close on outside click
@@ -46,9 +48,6 @@ const Navbar = ({ user = { username: "Username88", role: "Admin", avatar: "https
       document.removeEventListener("keydown", onKey);
     };
   }, []);
-
-  // Close when the route changes
-  useEffect(() => setMenuOpen(false), [location.pathname]);
 
   return (
     <header className="px-4 pt-4">
@@ -84,9 +83,10 @@ const Navbar = ({ user = { username: "Username88", role: "Admin", avatar: "https
         <div className="relative flex items-center gap-3" ref={menuRef}>
           <Link
             to="/account-settings"
+            onClick={() => setMenuOpen(false)}
             className="flex items-center gap-3 transition hover:opacity-80"
           >
-            <img src={user.avatar} alt={username} className="h-10 w-10 rounded-full object-cover" />
+            {user?.avatar ? <img src={user.avatar} alt={username} className="h-10 w-10 rounded-full object-cover" /> : <span aria-label={username} className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-light text-sm font-semibold text-primary">{initials || "A"}</span>}
             <span className="hidden font-medium text-text transition hover:text-primary sm:inline">
               {username}
             </span>
@@ -104,7 +104,7 @@ const Navbar = ({ user = { username: "Username88", role: "Admin", avatar: "https
                 : "border-border text-text-secondary hover:border-primary"
             }`}
           >
-            {user.role}
+            {role || "Profile"}
           </button>
 
           {menuOpen && (
@@ -116,6 +116,7 @@ const Navbar = ({ user = { username: "Username88", role: "Admin", avatar: "https
                 <Link
                   key={title}
                   to={path}
+                  onClick={() => setMenuOpen(false)}
                   role="menuitem"
                   className={`flex items-center justify-between py-4 text-text transition hover:text-primary ${
                     i > 0 ? "border-t border-divider" : ""

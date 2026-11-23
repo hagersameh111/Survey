@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { Plus, Search, LayoutGrid, ChevronUp, UserPlus } from "lucide-react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import InviteMembersModal from "../modals/InviteMembersModal";
+import { createForm } from "../../api/forms";
 
 const Section = ({ title, items }) => {
   const [open, setOpen] = useState(true);
@@ -49,6 +50,11 @@ const Section = ({ title, items }) => {
 const Sidebar = ({ folders, stats }) => {
   const [search, setSearch] = useState("");
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const [showFolderModal, setShowFolderModal] = useState(false);
+  const [folderName, setFolderName] = useState("");
+  const [folderError, setFolderError] = useState("");
+  const [creatingFolder, setCreatingFolder] = useState(false);
+  const navigate = useNavigate();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -56,6 +62,23 @@ const Sidebar = ({ folders, stats }) => {
   }, [folders, search]);
 
   const percent = Math.min(100, (stats.collected / (stats.limit || 1)) * 100);
+
+  const handleCreateFolder = async (event) => {
+    event.preventDefault();
+    const name = folderName.trim();
+    if (!name) return;
+    setCreatingFolder(true);
+    setFolderError("");
+    try {
+      const form = await createForm({ title: "Untitled Form", folder: name });
+      setShowFolderModal(false);
+      navigate(`/form-builder?formId=${form._id}`);
+    } catch (error) {
+      setFolderError(error.response?.data?.message || error.message || "Could not create the folder.");
+    } finally {
+      setCreatingFolder(false);
+    }
+  };
 
   return (
     <aside className="flex w-full shrink-0 flex-col gap-6 rounded-2xl bg-surface p-4 shadow-sm sm:p-5 lg:w-72">
@@ -94,7 +117,7 @@ const Sidebar = ({ folders, stats }) => {
             <LayoutGrid size={18} />
             <span className="font-medium">Surveys</span>
           </div>
-          <button className="rounded-lg p-1 text-primary transition hover:bg-primary-light" aria-label="New folder">
+          <button type="button" onClick={() => { setFolderError(""); setShowFolderModal(true); }} className="rounded-lg p-1 text-primary transition hover:bg-primary-light" aria-label="New folder">
             <Plus size={18} />
           </button>
         </div>
@@ -115,6 +138,19 @@ const Sidebar = ({ folders, stats }) => {
       </div>
 
       <InviteMembersModal open={showInviteModal} onClose={() => setShowInviteModal(false)} />
+      {showFolderModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFolderModal(false); }}>
+        <form onSubmit={handleCreateFolder} className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">
+          <h2 className="text-lg font-semibold text-text">Create a folder</h2>
+          <p className="mt-1 text-sm text-text-secondary">A new draft form will be created inside this folder.</p>
+          <label className="mt-4 block text-sm font-medium text-text" htmlFor="new-folder-name">Folder name</label>
+          <input id="new-folder-name" autoFocus value={folderName} onChange={(event) => setFolderName(event.target.value)} maxLength={100} className="mt-2 w-full rounded-xl border border-border bg-background p-3 text-sm outline-none focus:border-primary" />
+          {folderError && <p role="alert" className="mt-3 text-sm text-red-700">{folderError}</p>}
+          <div className="mt-5 flex justify-end gap-3">
+            <button type="button" onClick={() => setShowFolderModal(false)} className="rounded-xl border border-border px-4 py-2 text-sm text-text-secondary">Cancel</button>
+            <button type="submit" disabled={!folderName.trim() || creatingFolder} className="rounded-xl bg-primary px-4 py-2 text-sm font-medium text-white disabled:opacity-50">{creatingFolder ? "Creating…" : "Create folder"}</button>
+          </div>
+        </form>
+      </div>}
     </aside>
   );
 };

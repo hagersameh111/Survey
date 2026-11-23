@@ -47,3 +47,5 @@ export const submitResponseSchema = z
     answers: z.array(answerSchema),
   })
   .strict();
+
+export const finishRatingSchema = z.object({ rating: z.number().int().min(1).max(5) }).strict();

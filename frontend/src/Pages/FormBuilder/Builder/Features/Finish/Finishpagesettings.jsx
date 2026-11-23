@@ -13,6 +13,7 @@ const fieldCls =
 // onChange = receives the new nextForm object
 const FinishPageSettings = ({ value = {}, onChange, currentFormId }) => {
   const { enabled = false, formId = "", formName = "" } = value;
+  const redirectEnabled = value.redirectEnabled ?? true;
   const [forms, setForms] = useState([]);
   const [status, setStatus] = useState("idle"); // idle | loading | error | ready
 
@@ -54,6 +55,7 @@ const FinishPageSettings = ({ value = {}, onChange, currentFormId }) => {
 
       {enabled && (
         <div className="space-y-3">
+          <div className="flex items-center justify-between rounded-lg bg-background px-3 py-2"><span className={labelCls}>Redirect automatically after submission</span><SwitchToggle checked={redirectEnabled} onChange={(redirectEnabledValue) => update({ redirectEnabled: redirectEnabledValue })} /></div>
           <div>
             <label className={`mb-1 block ${labelCls}`}>Choose form</label>
             <div className="relative">

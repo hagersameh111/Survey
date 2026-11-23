@@ -1,6 +1,8 @@
 import {
   createForm,
   closeForm,
+  pauseForm,
+  resumeForm,
   duplicateForm,
   getFormById,
   getPublicFormById,
@@ -166,7 +168,8 @@ export const getPublicById = async (req, res) => {
       success: true,
       data: form,
     });
-  } catch {
+  } catch (error) {
+    if ([400, 403].includes(error.statusCode)) return res.status(error.statusCode).json({ success: false, message: error.message });
     return res.status(500).json({
       success: false,
       message: "Internal server error",
@@ -326,6 +329,22 @@ export const close = async (req, res) => {
     });
   }
 };
+
+const updatePublicStatus = async (req, res, operation, service, expectedError) => {
+  try {
+    const form = await service(req.params.formId, req.user.id);
+    return res.status(200).json({ success: true, data: form });
+  } catch (error) {
+    if (error.message === "Form not found") return res.status(404).json({ success: false, message: error.message });
+    if (error.message === expectedError) return res.status(400).json({ success: false, message: error.message });
+    if (error.statusCode === 409) return res.status(409).json({ success: false, message: error.message });
+    console.error(`${operation} form error:`, error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
+  }
+};
+
+export const pause = (req, res) => updatePublicStatus(req, res, "Pause", pauseForm, "Only published forms can be paused");
+export const resume = (req, res) => updatePublicStatus(req, res, "Resume", resumeForm, "Only paused forms can be resumed");
 
 export const reopen = async (req, res) => {
   try {

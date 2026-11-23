@@ -24,6 +24,13 @@ export const submitFormResponse = async (formId, response, participantToken) => 
   return data.data;
 };
 
+export const saveFormFinishRating = async (formId, responseId, rating, participantToken) => {
+  const { data } = await api.post(`/public/forms/${formId}/responses/${responseId}/finish-rating`, { rating }, {
+    headers: participantToken ? { "X-Participant-Token": participantToken } : {},
+  });
+  return data.data;
+};
+
 export const issueParticipantToken = async (formId) => {
   const { data } = await api.post(`/public/forms/${formId}/participant-tokens`);
   return data.data.participantToken;
@@ -99,6 +106,16 @@ export const closeForm = async (formId) => {
   return data.data;
 };
 
+export const pauseForm = async (formId) => {
+  const { data } = await api.post(`/forms/${formId}/pause`);
+  return data.data;
+};
+
+export const resumeForm = async (formId) => {
+  const { data } = await api.post(`/forms/${formId}/resume`);
+  return data.data;
+};
+
 export const reopenForm = async (formId) => {
   const { data } = await api.post(`/forms/${formId}/reopen`);
   return data.data;
@@ -117,6 +134,26 @@ export const updateFormIdentityMode = async (formId, identityMode) => {
 export const getResponses = async (formId, params = {}) => {
   const { data } = await api.get(`/forms/${formId}/responses`, { params });
   return data;
+};
+
+export const getResponseExport = async (formId) => {
+  const { data } = await api.get(`/forms/${formId}/responses/export`);
+  return data.data;
+};
+
+export const getShortUrls = async () => {
+  const { data } = await api.get("/short-urls");
+  return data.data;
+};
+
+export const createShortUrl = async (payload) => {
+  const { data } = await api.post("/short-urls", payload);
+  return data.data;
+};
+
+export const updateShortUrl = async (id, changes) => {
+  const { data } = await api.patch(`/short-urls/${id}`, changes);
+  return data.data;
 };
 
 export const getResponse = async (formId, responseId) => {

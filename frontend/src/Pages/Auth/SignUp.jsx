@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { register } from "../../api/auth";
+import { useAuth } from "../../context/AuthContext";
 
 const SignUp = () => {
   const [name, setName] = useState("");
@@ -8,6 +9,7 @@ const SignUp = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const navigate = useNavigate();
+  const { authenticate } = useAuth();
 
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -19,10 +21,9 @@ const SignUp = () => {
     const lastName = nameParts.length > 1 ? nameParts.slice(1).join(" ") : firstName;
 
     try {
-      await register({ firstName, lastName, email, password });
-
-      // Navigate to login on success
-      navigate("/");
+      const result = await register({ firstName, lastName, email, password });
+      authenticate(result.token, result.user);
+      navigate("/dashboard", { replace: true });
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Signup failed");
     }

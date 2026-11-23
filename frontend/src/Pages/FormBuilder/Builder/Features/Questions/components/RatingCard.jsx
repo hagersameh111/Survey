@@ -1,6 +1,6 @@
 import { GripVertical, Trash2, Star } from "lucide-react";
 
-const RatingCard = ({ id, index = 1, title = "", description = "", scale = 5, onChange = () => {}, onDelete, onMoveUp, onMoveDown }) => (
+const RatingCard = ({ id, index = 1, title = "", description = "", scale = 5, style = "stars", onChange = () => {}, onDelete, onMoveUp, onMoveDown }) => (
   <div id={id} className="rounded-2xl border border-primary bg-white p-6 shadow-sm">
     <div className="flex items-start gap-4">
       <GripVertical size={20} className="mt-2 cursor-grab text-text-muted" />
@@ -27,8 +27,12 @@ const RatingCard = ({ id, index = 1, title = "", description = "", scale = 5, on
         <button type="button" onClick={onDelete} aria-label="Delete question" className="hover:text-red-500"><Trash2 size={20} /></button>
       </div>
     </div>
-    <div className="ml-10 mt-6 flex items-center gap-2 text-amber-400">
-      {Array.from({ length: Math.min(Math.max(Number(scale) || 5, 2), 10) }, (_, starIndex) => <Star key={starIndex} size={20} />)}
+    <div className="ml-10 mt-6 flex flex-wrap items-center gap-2 text-amber-400">
+      {Array.from({ length: Math.min(Math.max(Number(scale) || 5, 2), 10) }, (_, ratingIndex) => style === "numbers"
+        ? <span key={ratingIndex} className="flex h-8 min-w-8 items-center justify-center rounded-lg border border-border px-2 text-sm text-text-secondary">{ratingIndex + 1}</span>
+        : style === "emoji"
+          ? <span key={ratingIndex} className="text-xl">{["😞", "☹️", "😕", "🙁", "😐", "🙂", "😊", "😄", "😍", "🤩"][Math.min(ratingIndex, 9)]}</span>
+          : <Star key={ratingIndex} size={20} />)}
       <label className="ml-4 flex items-center gap-2 text-sm text-text-secondary">
         Scale
         <input

@@ -266,6 +266,7 @@ function PaymentPanel({ billing }) {
     cvv: "123",
     save: false,
   });
+  const [checkoutMessage, setCheckoutMessage] = useState("");
 
   const update = (patch) => setCard((c) => ({ ...c, ...patch }));
   const clearCard = () =>
@@ -425,10 +426,12 @@ function PaymentPanel({ billing }) {
 
       <button
         type="button"
+        onClick={() => setCheckoutMessage("Payment processing is not connected yet. No payment was made.")}
         className={`mt-6 w-full rounded-lg bg-blue-800 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-900 ${focusRing}`}
       >
         Checkout
       </button>
+      {checkoutMessage && <p role="status" className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{checkoutMessage}</p>}
     </aside>
   );
 }
@@ -442,14 +445,6 @@ export default function PricingCheckout() {
   const [checkout, setCheckout] = useState(false);
   const navigate = useNavigate();
 
-<PlansSection
-  billing={billing}
-  setBilling={setBilling}
-  checkout={checkout}
-  onUpgrade={() => setCheckout(true)}
-  onBack={() => navigate(-1)}
-/>
-
   return (
     <div className="min-h-screen bg-white font-sans text-slate-800 antialiased lg:flex">
       <PlansSection
@@ -457,7 +452,7 @@ export default function PricingCheckout() {
         setBilling={setBilling}
         checkout={checkout}
         onUpgrade={() => setCheckout(true)}
-        onBack={() => setCheckout(false)}
+        onBack={() => checkout ? setCheckout(false) : navigate("/account-settings")}
       />
       {checkout && <PaymentPanel billing={billing} />}
     </div>

@@ -27,6 +27,7 @@ const FolderPage = () => {
   const [view, setView] = useState("list");
   const [sort, setSort] = useState(SORT_OPTIONS[0]);
   const [formAction, setFormAction] = useState(null);
+  const [actionError, setActionError] = useState("");
 
   const folder = folders.find((f) => f.slug === folderSlug);
   const title = folder?.name ?? folderSlug.replace(/-/g, " ");
@@ -38,12 +39,15 @@ const FolderPage = () => {
   });
 
   const run = async (fn, id) => {
+    setActionError("");
     try {
       await fn(id);
       refetch();
       refreshFolders();
+      return true;
     } catch (e) {
-      alert(e.response?.data?.message || e.message || "Action failed");
+      setActionError(e.response?.data?.message || e.message || "Action failed");
+      return false;
     }
   };
 
@@ -81,6 +85,7 @@ const FolderPage = () => {
         sort={sort}
         onSortChange={setSort}
       />
+      {actionError && <p role="alert" className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-700">{actionError}</p>}
       {content}
       {formAction && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
         <form onSubmit={async (event) => {
@@ -88,8 +93,7 @@ const FolderPage = () => {
           const value = formAction.value.trim();
           if (!value) return;
           const changes = formAction.type === "rename" ? { title: value } : { folder: value };
-          await run((id) => updateForm(id, changes), formAction.form.id);
-          setFormAction(null);
+          if (await run((id) => updateForm(id, changes), formAction.form.id)) setFormAction(null);
         }} className="w-full max-w-md rounded-2xl border border-border bg-surface p-6 shadow-xl">
           <h2 className="text-lg font-semibold text-text">{formAction.type === "rename" ? "Rename form" : "Move form"}</h2>
           <label className="mt-4 block text-sm font-medium text-text" htmlFor="form-action-value">{formAction.type === "rename" ? "Form name" : "Folder name"}</label>

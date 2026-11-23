@@ -1,4 +1,4 @@
-import { Star, Plus } from "lucide-react";
+import { Star } from "lucide-react";
 import SwitchToggle from "../../Shared/SwitchToggle";
 import FinishPageSettings from "./Finishpagesettings";
 
@@ -21,7 +21,6 @@ const FinishSidebar = ({ page = {}, onUpdatePage, currentFormId }) => {
         <div className="border-t border-border pt-5"><FinishPageSettings value={nextForm} onChange={(value) => onUpdatePage({ nextForm: value })} currentFormId={currentFormId} />
           {nextForm.enabled && <div className="mt-4"><label className="mb-1 block text-sm text-text-secondary">URL Link</label><input type="url" value={nextForm.url || ""} onChange={(event) => onUpdatePage({ nextForm: { ...nextForm, url: event.target.value, formId: "", formName: "" } })} placeholder="https://example.com" className={inputClass} /></div>}
         </div>
-        <div className="flex items-center justify-between border-t border-border pt-5 text-sm font-medium text-text"><span>Image or video</span><button type="button" aria-label="Add image or video" className="flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white text-primary"><Plus size={18} /></button></div>
       </div>
     </aside>
   );

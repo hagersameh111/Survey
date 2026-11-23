@@ -80,6 +80,13 @@ const responseSchema = new mongoose.Schema(
       default: [],
     },
 
+    finalRating: {
+      type: Number,
+      min: 1,
+      max: 5,
+      default: undefined,
+    },
+
     participantInfo: {
       type: [answerSchema],
       default: [],

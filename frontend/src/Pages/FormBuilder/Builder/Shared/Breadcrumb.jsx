@@ -6,7 +6,7 @@ const Breadcrumb = () => {
     <div className="mb-8 flex items-center gap-2 text-sm">
 
       <Link
-        to="/"
+        to="/dashboard"
         className="text-text-muted hover:text-primary"
       >
         Dashboard

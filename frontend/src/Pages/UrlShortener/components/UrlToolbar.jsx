@@ -7,6 +7,7 @@ const UrlToolbar = ({
   setSearch,
   sortBy,
   setSortBy,
+  onFilterClick,
 }) => {
   return (
     <>
@@ -18,7 +19,7 @@ const UrlToolbar = ({
 
         <div className="flex items-center gap-4">
 
-          <FilterButton />
+          <FilterButton onClick={onFilterClick} />
 
           <SearchBar
             value={search}
