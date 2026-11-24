@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import BuilderNavbar from "./Builder/Shared/BuilderNavbar";
 import BuilderSidebar from "./Builder/Shared/BuilderSidebar";
@@ -8,11 +8,11 @@ import BioAnswerSidebar from "./Builder/Features/ParticipantBio/components/BioAn
 import WelcomeSidebar from "./Builder/Features/Welcome/components/WelcomeSidebar";
 import FinishSidebar from "./Builder/Features/Finish/FinishSidebar";
 import PublicForm from "../PublicForm/PublicForm";
-import { closeForm, createForm, getForm, publishForm, reopenForm, saveFormBuilder, updateForm, updateFormAccess, updateFormIdentityMode } from "../../api/forms";
+import { closeForm, createForm, getForm, pauseForm, publishForm, reopenForm, resumeForm, saveFormBuilder, updateForm, updateFormAccess, updateFormIdentityMode } from "../../api/forms";
 
 const pageDefaults = {
-  welcome: { title: "Welcome Page", description: "" },
-  participant_info: { title: "Participant Bio", description: "" },
+  welcome: { title: "Welcome Page", description: "", buttonText: "Start Now", config: { timeEnabled: true, time: "00 : 10 : 00", contactEnabled: true, contactEmail: "", contactDescription: "" } },
+  participant_info: { title: "Participant Bio", description: "", buttonText: "Confirm" },
   questions: { title: "Questions Page", description: "" },
   ending: { title: "Thank you for taking time to complete the survey.", description: "Your honest input helps us making better decisions in the future. Please rate our service, every bit of feedback is appreciated.", buttonText: "Submit", ratingRequired: true, nextForm: {} },
 };
@@ -68,7 +68,7 @@ const toBuilderPayload = (questions, savedPages, includeIds = true, pageContent 
         blockData.description = question.description || "";
       }
       if (["single_choice", "multiple_choice", "dropdown"].includes(type)) {
-      blockData.options = question.options?.length ? question.options : [{ label: "Option 1" }];
+      blockData.options = (question.options || []).filter((option) => option.label?.trim());
     }
       if (type === "rating") {
         blockData.style = question.style || blockData.style || "stars";
@@ -127,6 +127,9 @@ const toBuilderPayload = (questions, savedPages, includeIds = true, pageContent 
           ratingRequired: content.ratingRequired !== false,
           nextForm: content.nextForm || {},
         } : {}),
+        ...(type === "welcome" ? { buttonText: content.buttonText || "Start Now" } : {}),
+        ...(type === "participant_info" ? { buttonText: content.buttonText || "Confirm" } : {}),
+        ...(type === "welcome" ? { config: content.config || {} } : {}),
         blocks: type === "questions" ? questionBlocks : type === "participant_info" ? [...bioBlocks, ...customBioBlocks] : existingBlocks,
       };
     }),
@@ -160,6 +163,7 @@ const FormBuilder = () => {
   });
   const [formAccess, setFormAccess] = useState({ type: "open", code: "" });
   const [savedAccessType, setSavedAccessType] = useState("open");
+  const [savedMultipleUse, setSavedMultipleUse] = useState(false);
   const [savedIdentityMode, setSavedIdentityMode] = useState("anonymous");
   const [pageContent, setPageContent] = useState(pageDefaults);
   const [bioFields, setBioFields] = useState({
@@ -178,6 +182,17 @@ const FormBuilder = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState("");
   const [publishOpen, setPublishOpen] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [isDirty, setIsDirty] = useState(false);
+  const [isHydrated, setIsHydrated] = useState(false);
+  const saveQueueRef = useRef(Promise.resolve());
+  const saveHandlerRef = useRef(null);
+  const editRevisionRef = useRef(0);
+  const markDirty = () => {
+    editRevisionRef.current += 1;
+    setIsHydrated(true);
+    setIsDirty(true);
+  };
 
   useEffect(() => {
     const nextId = searchParams.get("formId") || pathFormId || null;
@@ -194,6 +209,9 @@ const FormBuilder = () => {
     getForm(formId)
       .then((form) => {
         if (cancelled) return;
+        setIsHydrated(true);
+        setIsDirty(false);
+        editRevisionRef.current = 0;
         const pages = form.pages || [];
         setSavedPages(pages);
         setFormTitle(form.title || "Untitled Form");
@@ -213,13 +231,14 @@ const FormBuilder = () => {
           ...form.settings,
         });
         const accessType = form.access?.type || "open";
-        setFormAccess({ type: accessType, code: "" });
+        setFormAccess({ type: accessType, code: "", multipleUse: Boolean(form.access?.multipleUse) });
         setSavedAccessType(accessType);
+        setSavedMultipleUse(Boolean(form.access?.multipleUse));
         setSavedIdentityMode(form.settings?.identityMode || "anonymous");
         setPageContent(Object.fromEntries(Object.keys(pageDefaults).map((type) => {
           const page = pages.find((entry) => entry.type === type);
           const isLegacyFinishTitle = type === "ending" && page?.title === "Finish Page";
-          return [type, { title: isLegacyFinishTitle ? pageDefaults[type].title : page?.title ?? pageDefaults[type].title, description: page?.description || pageDefaults[type].description, ...(type === "ending" ? { buttonText: page?.buttonText || "Submit", ratingRequired: page?.ratingRequired !== false, nextForm: page?.nextForm || {} } : {}) }];
+          return [type, { title: isLegacyFinishTitle ? pageDefaults[type].title : page?.title ?? pageDefaults[type].title, description: page?.description || pageDefaults[type].description, ...(type === "ending" ? { buttonText: page?.buttonText || "Submit", ratingRequired: page?.ratingRequired !== false, nextForm: page?.nextForm || {} } : {}), ...(type === "welcome" ? { buttonText: page?.buttonText || "Start Now", config: { ...pageDefaults.welcome.config, ...(page?.config || {}) } } : {}), ...(type === "participant_info" ? { buttonText: page?.buttonText || "Confirm" } : {}) }];
         })));
         const bioPage = pages.find((page) => page.type === "participant_info");
         setBioFields(Object.fromEntries(Object.keys(bioFieldTypes).map((key) => {
@@ -238,7 +257,7 @@ const FormBuilder = () => {
           title: block.data?.question || block.data?.text || block.data?.url || "",
           description: block.data?.description || "",
           required: Boolean(block.data?.required),
-          options: block.data?.options || [{ label: "Option 1" }],
+          options: block.data?.options || [{ label: "" }],
           scale: block.data?.scale || 5,
           style: block.data?.style || "stars",
           placeholder: block.data?.placeholder || "",
@@ -258,13 +277,17 @@ const FormBuilder = () => {
         if (!cancelled) setError(requestError.response?.data?.message || requestError.message || "Could not load this form.");
       })
       .finally(() => {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled) {
+          setIsLoading(false);
+          if (!formId) setIsHydrated(true);
+        }
       });
 
     return () => { cancelled = true; };
   }, [formId]);
 
   const handleAddQuestion = (type) => {
+    markDirty();
     const id = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setQuestions((prev) => [...prev, {
       id,
@@ -272,7 +295,7 @@ const FormBuilder = () => {
       title: "",
       description: "",
       required: false,
-      options: [{ label: "Option 1" }],
+      options: [{ label: "" }],
       scale: 5,
       style: "stars",
       placeholder: "",
@@ -282,24 +305,29 @@ const FormBuilder = () => {
   };
 
   const handleDeleteQuestion = (id) => {
+    markDirty();
     const remaining = questions.filter((question) => question.id !== id).map((question, index) => ({ ...question, order: index + 1 }));
     setQuestions(remaining);
     if (selectedQuestionId === id) setSelectedQuestionId(remaining[0]?.id);
   };
 
   const handleUpdateQuestion = (id, changes) => {
+    markDirty();
     setQuestions((prev) => prev.map((question) => question.id === id ? { ...question, ...changes } : question));
   };
 
   const handleUpdatePage = (type, changes) => {
+    markDirty();
     setPageContent((previous) => ({ ...previous, [type]: { ...previous[type], ...changes } }));
   };
 
   const handleUpdateBioField = (key, changes) => {
+    markDirty();
     setBioFields((previous) => ({ ...previous, [key]: { ...previous[key], ...changes } }));
   };
 
   const handleSettingsChange = (key, value) => {
+    markDirty();
     if (key === "formTitle") setFormTitle(value);
     else setFormSettings((previous) => ({ ...previous, [key]: value }));
   };
@@ -314,6 +342,7 @@ const FormBuilder = () => {
     const index = questions.findIndex((question) => question.id === id);
     const destination = index + direction;
     if (index < 0 || destination < 0 || destination >= questions.length) return;
+    markDirty();
     const reordered = [...questions];
     [reordered[index], reordered[destination]] = [reordered[destination], reordered[index]];
     setQuestions(reordered.map((question, order) => ({ ...question, order: order + 1 })));
@@ -332,7 +361,9 @@ const FormBuilder = () => {
   };
 
   // 4. Backend Submission Handler mapped to Zod Schema
-  const handleSaveToBackend = async ({ openPublish = false, publish = false } = {}) => {
+  const performSaveToBackend = async ({ openPublish = false, publish = false, autosave = false } = {}) => {
+    const savedRevision = editRevisionRef.current;
+    const questionIdsAtSave = questions.map((question) => question.id);
     setIsSaving(true);
     setError("");
     try {
@@ -359,19 +390,27 @@ const FormBuilder = () => {
         await updateFormIdentityMode(activeFormId, identityMode);
         setSavedIdentityMode(identityMode);
       }
-      if (formAccess.type !== savedAccessType) {
+      if (formAccess.type !== savedAccessType || Boolean(formAccess.multipleUse) !== savedMultipleUse) {
         await updateFormAccess(activeFormId, formAccess.type === "code"
-          ? { type: "code", code: formAccess.code }
-          : { type: "open" });
+          ? { type: "code", code: formAccess.code, multipleUse: Boolean(formAccess.multipleUse) }
+          : { type: "open", multipleUse: Boolean(formAccess.multipleUse) });
         setSavedAccessType(formAccess.type);
+        setSavedMultipleUse(Boolean(formAccess.multipleUse));
       } else if (formAccess.type === "code" && formAccess.code) {
-        await updateFormAccess(activeFormId, { type: "code", code: formAccess.code });
+        await updateFormAccess(activeFormId, { type: "code", code: formAccess.code, multipleUse: Boolean(formAccess.multipleUse) });
       }
       if (formAccess.code) setFormAccess((previous) => ({ ...previous, code: "" }));
       if (publish) await publishForm(activeFormId);
       if (publish) setStatus(savedStatus);
       setSavedPages(savedForm.pages || []);
-      alert("Form saved successfully!");
+      const savedQuestionBlocks = (savedForm.pages || []).find((page) => page.type === "questions")?.blocks || [];
+      const savedIdsByLocalId = new Map(questionIdsAtSave.map((id, index) => [id, savedQuestionBlocks[index]?._id]));
+      setQuestions((current) => current.map((question) => ({ ...question, apiId: savedIdsByLocalId.get(question.id) || question.apiId })));
+      if (editRevisionRef.current === savedRevision) setIsDirty(false);
+      if (!autosave) {
+        setNotice("Form saved successfully.");
+        window.setTimeout(() => setNotice(""), 3500);
+      }
       if (openPublish) setPublishOpen(true);
       return true;
     } catch (err) {
@@ -383,14 +422,34 @@ const FormBuilder = () => {
     }
   };
 
+  const handleSaveToBackend = (options = {}) => {
+    const queuedSave = saveQueueRef.current.catch(() => undefined).then(() => performSaveToBackend(options));
+    saveQueueRef.current = queuedSave;
+    return queuedSave;
+  };
+  useEffect(() => {
+    saveHandlerRef.current = handleSaveToBackend;
+  });
+
+  useEffect(() => {
+    if (!isHydrated || !isDirty || isLoading || status !== "draft") return undefined;
+    const timer = window.setTimeout(() => {
+      saveHandlerRef.current?.({ autosave: true });
+    }, 750);
+    return () => window.clearTimeout(timer);
+  }, [isDirty, isHydrated, isLoading, status, questions, pageContent, bioFields, formSettings, formTitle, formDescription, formAccess]);
+
   const handlePublish = () => handleSaveToBackend({ openPublish: true, publish: true });
 
   const handleFormStatus = async (action) => {
     if (!formId) return;
+    if (action === "close" && !window.confirm("Close this survey? Respondents will no longer be able to submit responses.")) return;
+    if (action === "pause" && !window.confirm("Pause this survey? Respondents will not be able to access it until you resume it.")) return;
     setIsSaving(true);
     setError("");
     try {
-      const updated = action === "close" ? await closeForm(formId) : await reopenForm(formId);
+      const statusActions = { close: closeForm, reopen: reopenForm, pause: pauseForm, resume: resumeForm };
+      const updated = await statusActions[action](formId);
       setStatus(updated.status);
     } catch (err) {
       setError(err.response?.data?.message || err.message || "Could not update form status.");
@@ -411,7 +470,7 @@ const FormBuilder = () => {
         >
           ← Back to Builder
         </button>
-        <PublicForm questions={questions} bioFields={bioFields} />
+        <PublicForm questions={questions} bioFields={bioFields} pages={pageContent} />
       </div>
     );
   }
@@ -428,6 +487,8 @@ const FormBuilder = () => {
         onDuplicate={handleDuplicate}
         status={status}
         onCloseForm={() => handleFormStatus("close")}
+        onPauseForm={() => handleFormStatus("pause")}
+        onResumeForm={() => handleFormStatus("resume")}
         onReopenForm={() => handleFormStatus("reopen")}
         isSaving={isSaving}
         formUrl={`${window.location.origin}/view?formId=${formId || ""}`}
@@ -441,6 +502,7 @@ const FormBuilder = () => {
           Creating a Shared survey — it will belong to the team workspace and count toward its plan's active-survey limit once published.
         </div>
       )}
+      {notice && <div role="status" className="mx-6 mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">{notice}</div>}
       {isLoading ? (
         <div className="p-10 text-center text-text-secondary">Loading form…</div>
       ) : (
@@ -454,6 +516,7 @@ const FormBuilder = () => {
         formTitle={formTitle}
         formDescription={formDescription}
         onFormUpdate={(changes) => {
+          markDirty();
           if (changes.title !== undefined) setFormTitle(changes.title);
           if (changes.description !== undefined) setFormDescription(changes.description);
         }}
@@ -474,7 +537,7 @@ const FormBuilder = () => {
         settings={{ ...formSettings, formTitle, status }}
         access={formAccess}
         status={status}
-        onAccessChange={setFormAccess}
+        onAccessChange={(value) => { markDirty(); setFormAccess(value); }}
         onSettingsChange={handleSettingsChange}
         onSaveSettings={handleSaveToBackend}
         onUpdatePage={handleUpdatePage}
@@ -486,7 +549,7 @@ const FormBuilder = () => {
 
         {/* Dynamic Right Sidebar Context */}
         {selectedPage === "welcome" ? (
-          <WelcomeSidebar page={pageContent.welcome} onUpdatePage={(changes) => handleUpdatePage("welcome", changes)} access={formAccess} onAccessChange={setFormAccess} />
+          <WelcomeSidebar page={pageContent.welcome} onUpdatePage={(changes) => handleUpdatePage("welcome", changes)} access={formAccess} onAccessChange={(value) => { markDirty(); setFormAccess(value); }} />
         ) : selectedPage === "bio" ? (
           <BioAnswerSidebar fields={bioFields} onChange={handleUpdateBioField} page={pageContent.participant_info} onUpdatePage={(changes) => handleUpdatePage("participant_info", changes)} />
         ) : selectedPage === "questions" ? (

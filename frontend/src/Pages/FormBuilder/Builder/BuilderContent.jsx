@@ -6,9 +6,9 @@ import FinishPage from "./Features/Finish/FinishPage";
 const BuilderContent = ({ selectedPage, questions, pageContent, bioFields, settings, access, status, onAccessChange, onSettingsChange, onSaveSettings, onUpdatePage, onAddQuestion, onDeleteQuestion, onUpdateQuestion, onMoveQuestion, onDuplicate, onPreview }) => {
   switch (selectedPage) {
     case "welcome":
-      return <WelcomePage page={pageContent.welcome} access={access} onUpdatePage={(changes) => onUpdatePage("welcome", changes)} />;
+      return <WelcomePage page={pageContent.welcome} access={access} />;
     case "bio":
-      return <ParticipantBioPage page={pageContent.participant_info} onUpdatePage={(changes) => onUpdatePage("participant_info", changes)} bioFields={bioFields} />;
+      return <ParticipantBioPage page={pageContent.participant_info} bioFields={bioFields} />;
     case "questions":
       return (
         <QuestionsPage 
@@ -30,7 +30,7 @@ const BuilderContent = ({ selectedPage, questions, pageContent, bioFields, setti
         />
       );
     case "finish":
-      return <FinishPage page={pageContent.ending} onUpdatePage={(changes) => onUpdatePage("ending", changes)} />;
+      return <FinishPage page={pageContent.ending} />;
     default:
       return <QuestionsPage questions={questions} onAddQuestion={onAddQuestion} onDeleteQuestion={onDeleteQuestion} onUpdateQuestion={onUpdateQuestion} onMoveQuestion={onMoveQuestion} onDuplicate={onDuplicate} onPreview={onPreview} page={pageContent.questions} onUpdatePage={(changes) => onUpdatePage("questions", changes)} settings={settings} access={access} status={status} onAccessChange={onAccessChange} onSettingsChange={onSettingsChange} onSaveSettings={onSaveSettings} />;
   }

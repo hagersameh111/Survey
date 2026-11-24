@@ -34,18 +34,12 @@ const getEligibleForm = async (formId) => {
     return null;
   }
 
-  const form = await Form.findOne({
-    _id: formId,
-    status: "published",
-    "access.type": "open",
-  });
-
-  if (!form) {
-    return null;
-  }
+  const form = await Form.findById(formId);
+  if (!form) return null;
 
   if (form.status !== "published" || form.access?.type !== "open") {
-    return null;
+    const message = form.status === "paused" ? "This survey is paused" : form.status === "closed" ? "This survey is closed" : form.status === "expired" ? "This survey has expired" : form.status !== "published" ? "This survey is not published" : "This survey is not publicly accessible";
+    throw createTokenError(message, 403);
   }
 
   const identityMode = form.settings?.identityMode;

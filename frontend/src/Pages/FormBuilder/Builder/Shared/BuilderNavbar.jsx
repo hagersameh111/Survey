@@ -1,17 +1,11 @@
-import { useEffect, useState } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { Copy, Eye } from "lucide-react";
 import logo from "/logo.png";
 import PublishModal from "../../Components/PublishModal";
-import { getCurrentUser } from "../../../../api/auth";
+import { useAuth } from "../../../../context/AuthContext";
 
-const BuilderNavbar = ({ onSave, onPreview, onDuplicate, onPublish, onCloseForm, onReopenForm, status = "draft", isSaving = false, publishOpen, onPublishOpenChange, formUrl }) => {
-  const [user, setUser] = useState(null);
-  useEffect(() => {
-    let active = true;
-    if (localStorage.getItem("token")) getCurrentUser().then((currentUser) => { if (active) setUser(currentUser); }).catch(() => {});
-    return () => { active = false; };
-  }, []);
+const BuilderNavbar = ({ onSave, onPreview, onDuplicate, onPublish, onCloseForm, onPauseForm, onResumeForm, onReopenForm, status = "draft", isSaving = false, publishOpen, onPublishOpenChange, formUrl }) => {
+  const { user } = useAuth();
   const userName = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() : "Account";
 
   return (
@@ -47,7 +41,11 @@ const BuilderNavbar = ({ onSave, onPreview, onDuplicate, onPublish, onCloseForm,
             >
               Publish form
             </button>}
-            {status === "published" && <button type="button" onClick={onCloseForm} disabled={isSaving} className="rounded-xl border border-border px-5 py-3 font-medium text-text transition hover:border-primary hover:text-primary disabled:opacity-60">Close form</button>}
+            {status === "published" && <>
+              <button type="button" onClick={onPauseForm} disabled={isSaving} className="rounded-xl border border-amber-300 bg-amber-50 px-5 py-3 font-medium text-amber-800 transition hover:bg-amber-100 disabled:opacity-60">Pause survey</button>
+              <button type="button" onClick={onCloseForm} disabled={isSaving} className="rounded-xl border border-red-300 bg-red-50 px-5 py-3 font-medium text-red-700 transition hover:bg-red-100 disabled:opacity-60">Close form</button>
+            </>}
+            {status === "paused" && <button type="button" onClick={onResumeForm} disabled={isSaving} className="rounded-xl bg-primary px-5 py-3 font-medium text-white transition hover:bg-primary-hover disabled:opacity-60">Resume survey</button>}
             {status === "closed" && <button type="button" onClick={onReopenForm} disabled={isSaving} className="rounded-xl bg-primary px-5 py-3 font-medium text-white transition hover:bg-primary-hover disabled:opacity-60">Reopen form</button>}
           </div>
 

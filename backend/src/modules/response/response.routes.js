@@ -6,8 +6,9 @@ import {
   responseIdSchema,
   responseListQuerySchema,
   submitResponseSchema,
+  finishRatingSchema,
 } from "./response.validation.js";
-import { getById, list, submit } from "./response.controller.js";
+import { exportAll, getById, list, saveFinishRating, submit } from "./response.controller.js";
 
 const router = express.Router();
 
@@ -73,6 +74,22 @@ const submissionMiddleware = [
 ];
 
 router.get(
+  "/:formId/responses/export",
+  auth,
+  validateFormId,
+  exportAll
+);
+
+router.post(
+  "/:formId/responses/:responseId/finish-rating",
+  optionalAuth,
+  validateFormId,
+  validateResponseId,
+  validate(finishRatingSchema),
+  saveFinishRating
+);
+
+router.get(
   "/:formId/responses",
   auth,
   validateFormId,
@@ -97,6 +114,14 @@ export const publicSubmissionRoutes = express.Router();
 publicSubmissionRoutes.post(
   "/:formId/responses",
   ...submissionMiddleware
+);
+publicSubmissionRoutes.post(
+  "/:formId/responses/:responseId/finish-rating",
+  optionalAuth,
+  validateFormId,
+  validateResponseId,
+  validate(finishRatingSchema),
+  saveFinishRating
 );
 
 export default router;

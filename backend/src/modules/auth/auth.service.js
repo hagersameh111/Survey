@@ -2,6 +2,17 @@ import User from "../user/user.model.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
+const createAuthToken = (user) => jwt.sign(
+  {
+    id: user._id,
+    role: user.role,
+  },
+  process.env.JWT_SECRET,
+  {
+    expiresIn: process.env.JWT_EXPIRES_IN,
+  }
+);
+
 export const registerUser = async (userData) => {
     const existingUser = await User.findOne({
     email: userData.email,
@@ -18,7 +29,7 @@ export const registerUser = async (userData) => {
     });
     user.password = undefined; // Exclude password from the response
 
-    return user;
+    return { user, token: createAuthToken(user) };
 };
 
 export const loginUser = async (userData) => {
@@ -40,16 +51,7 @@ export const loginUser = async (userData) => {
     }
     user.password = undefined; // Exclude password from the response
     
-    const token = jwt.sign(
-  {
-    id: user._id,
-    role: user.role,
-  },
-  process.env.JWT_SECRET,
-  {
-    expiresIn: process.env.JWT_EXPIRES_IN,
-  }
-);
+    const token = createAuthToken(user);
 
 user.password = undefined;
 

@@ -319,6 +319,186 @@ function Field({ label, htmlFor, children, className = "" }) {
   );
 }
 
+function PaymentPanel({ billing }) {
+  const { total, unit } = getPricing(billing);
+  const [method, setMethod] = useState("card");
+  const [card, setCard] = useState({
+    number: "xxxx xxxx xxxx 5678",
+    name: "AHMED ALI SABER IBRAHIM",
+    exp: "08/29",
+    cvv: "123",
+    save: false,
+  });
+  const [checkoutMessage, setCheckoutMessage] = useState("");
+
+  const update = (patch) => setCard((c) => ({ ...c, ...patch }));
+  const clearCard = () =>
+    setCard({ number: "", name: "", exp: "", cvv: "", save: false });
+
+  return (
+    <aside className="w-full border-t border-slate-200 bg-neutral-50 px-6 py-10 lg:w-96 lg:flex-shrink-0 lg:border-l lg:border-t-0 lg:px-9 lg:pt-24">
+      <div className="flex items-center justify-between border-b border-slate-200 pb-5">
+        <h2 className="text-lg font-semibold text-slate-900">Payment Methods</h2>
+        <button
+          type="button"
+          disabled
+          className="cursor-not-allowed text-sm text-slate-400"
+        >
+          Edit
+        </button>
+      </div>
+
+      {/* Card */}
+      <div className="mt-6">
+        <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-900">
+          <input
+            type="radio"
+            name="payment-method"
+            checked={method === "card"}
+            onChange={() => setMethod("card")}
+            className="h-4 w-4 accent-blue-800"
+          />
+          Visa/Master Card
+        </label>
+
+        {method === "card" && (
+          <div className="mt-5 space-y-4 pl-7">
+            <Field label="Card Number" htmlFor="card-number">
+              <div className="relative">
+                <input
+                  id="card-number"
+                  inputMode="numeric"
+                  autoComplete="cc-number"
+                  value={card.number}
+                  onChange={(e) => update({ number: formatCardNumber(e.target.value) })}
+                  placeholder="xxxx xxxx xxxx xxxx"
+                  className={`${inputClass} pr-14`}
+                />
+                <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                  <MastercardIcon />
+                </span>
+              </div>
+            </Field>
+
+            <Field label="Card Name Holder" htmlFor="card-name">
+              <input
+                id="card-name"
+                autoComplete="cc-name"
+                value={card.name}
+                onChange={(e) => update({ name: e.target.value.toUpperCase() })}
+                placeholder="NAME ON CARD"
+                className={inputClass}
+              />
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Exp. Date" htmlFor="card-exp">
+                <input
+                  id="card-exp"
+                  inputMode="numeric"
+                  autoComplete="cc-exp"
+                  value={card.exp}
+                  onChange={(e) => update({ exp: formatExpiry(e.target.value) })}
+                  placeholder="MM/YY"
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="CVV" htmlFor="card-cvv">
+                <div className="relative">
+                  <input
+                    id="card-cvv"
+                    inputMode="numeric"
+                    autoComplete="cc-csc"
+                    value={card.cvv}
+                    onChange={(e) =>
+                      update({ cvv: e.target.value.replace(/\D/g, "").slice(0, 4) })
+                    }
+                    placeholder="123"
+                    className={`${inputClass} pr-12`}
+                  />
+                  <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2">
+                    <CvvIcon />
+                  </span>
+                </div>
+              </Field>
+            </div>
+
+            <label className="flex cursor-pointer items-center gap-2 text-sm text-slate-500">
+              <input
+                type="checkbox"
+                checked={card.save}
+                onChange={(e) => update({ save: e.target.checked })}
+                className="h-4 w-4 rounded border-slate-300 accent-blue-800"
+              />
+              Save card info.
+            </label>
+
+            <div className="flex items-center justify-between pt-1 text-sm">
+              <button
+                type="button"
+                onClick={clearCard}
+                className={`inline-flex items-center gap-2 rounded text-blue-800 hover:text-blue-900 ${focusRing}`}
+              >
+                <Plus className="h-4 w-4" strokeWidth={1.75} />
+                Add New Card
+              </button>
+              <button
+                type="button"
+                onClick={clearCard}
+                className={`inline-flex items-center gap-2 rounded text-red-600 hover:text-red-700 ${focusRing}`}
+              >
+                <Trash2 className="h-4 w-4" strokeWidth={1.75} />
+                Delete Card
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* PayPal */}
+      <div className="mt-6">
+        <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-slate-900">
+          <input
+            type="radio"
+            name="payment-method"
+            checked={method === "paypal"}
+            onChange={() => setMethod("paypal")}
+            className="h-4 w-4 accent-blue-800"
+          />
+          PayPal
+        </label>
+      </div>
+
+      {/* Summary */}
+      <dl className="mt-6 rounded-lg border-2 border-dashed border-blue-700 bg-blue-50 p-5 text-sm">
+        <div className="flex items-center justify-between">
+          <dt className="text-slate-600">Plan price:</dt>
+          <dd className="text-slate-600">
+            {money(total)}/{unit}
+          </dd>
+        </div>
+        <div className="mt-3 flex items-center justify-between">
+          <dt className="text-slate-600">VAT:</dt>
+          <dd className="text-slate-600">$0</dd>
+        </div>
+        <div className="mt-4 flex items-center justify-between border-t border-slate-200 pt-4">
+          <dt className="font-semibold text-blue-800">Total price:</dt>
+          <dd className="text-2xl font-bold text-blue-800">{money(total)}</dd>
+        </div>
+      </dl>
+
+      <button
+        type="button"
+        onClick={() => setCheckoutMessage("Payment processing is not connected yet. No payment was made.")}
+        className={`mt-6 w-full rounded-lg bg-blue-800 py-3.5 text-sm font-semibold text-white transition-colors hover:bg-blue-900 ${focusRing}`}
+      >
+        Checkout
+      </button>
+      {checkoutMessage && <p role="status" className="mt-3 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">{checkoutMessage}</p>}
+    </aside>
+  );
+}
+
 /* -------------------------------------------------------------------------- */
 /*  Page                                                                       */
 /* -------------------------------------------------------------------------- */
@@ -337,6 +517,9 @@ export default function PricingCheckout() {
         checkoutPlanId={checkoutPlanId}
         onUpgrade={(planId) => setCheckoutPlanId(planId)}
         onBack={() => (checkoutPlanId ? setCheckoutPlanId(null) : navigate(-1))}
+        checkout={checkout}
+        onUpgrade={() => setCheckout(true)}
+        onBack={() => checkout ? setCheckout(false) : navigate("/account-settings")}
       />
       {checkoutPlan && (
         <ActivationPanel

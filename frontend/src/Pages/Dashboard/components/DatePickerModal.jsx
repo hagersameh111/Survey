@@ -2,12 +2,17 @@ import { X, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from "lucide-r
 import { useState } from "react";
 
 const DatePickerModal = ({ open, onClose, onSelectDate }) => {
-  const [selectedDate, setSelectedDate] = useState(17); // Placeholder active date
+  const [visibleMonth, setVisibleMonth] = useState(() => new Date());
+  const [selectedDate, setSelectedDate] = useState(() => new Date());
 
   if (!open) return null;
 
-  // Mock days array for standard 31-day month layout
-  const days = Array.from({ length: 31 }, (_, i) => i + 1);
+  const year = visibleMonth.getFullYear();
+  const month = visibleMonth.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const firstDay = new Date(year, month, 1).getDay();
+  const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+  const monthLabel = visibleMonth.toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm">
@@ -31,11 +36,11 @@ const DatePickerModal = ({ open, onClose, onSelectDate }) => {
         <div className="p-6">
           {/* Month Navigation */}
           <div className="mb-6 flex items-center justify-between">
-            <button className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-600 hover:text-blue-600">
+            <button type="button" aria-label="Previous month" onClick={() => setVisibleMonth(new Date(year, month - 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-600 hover:text-blue-600">
               <ChevronLeft size={16} />
             </button>
-            <span className="font-semibold text-gray-900">June 2026</span>
-            <button className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-600 hover:text-blue-600">
+            <span className="font-semibold text-gray-900">{monthLabel}</span>
+            <button type="button" aria-label="Next month" onClick={() => setVisibleMonth(new Date(year, month + 1, 1))} className="flex h-8 w-8 items-center justify-center rounded-full border border-gray-200 text-gray-600 transition hover:border-blue-600 hover:text-blue-600">
               <ChevronRight size={16} />
             </button>
           </div>
@@ -48,14 +53,15 @@ const DatePickerModal = ({ open, onClose, onSelectDate }) => {
           {/* Date Grid */}
           <div className="grid grid-cols-7 gap-1 text-sm">
             {/* Blank spaces for month start offset */}
-            <div className="h-9 w-9"></div>
+            {Array.from({ length: firstDay }, (_, index) => <div key={`blank-${index}`} className="h-9 w-9" />)}
             
             {days.map((day) => (
               <button
                 key={day}
-                onClick={() => setSelectedDate(day)}
+                type="button"
+                onClick={() => setSelectedDate(new Date(year, month, day))}
                 className={`flex h-9 w-9 items-center justify-center rounded-full transition ${
-                  selectedDate === day 
+                  selectedDate.getFullYear() === year && selectedDate.getMonth() === month && selectedDate.getDate() === day
                     ? "bg-blue-600 font-bold text-white shadow-sm" 
                     : "text-gray-700 hover:bg-blue-50 hover:text-blue-600"
                 }`}
@@ -76,7 +82,7 @@ const DatePickerModal = ({ open, onClose, onSelectDate }) => {
           </button>
           <button 
             onClick={() => {
-              onSelectDate && onSelectDate(`June ${selectedDate}, 2026`);
+              onSelectDate && onSelectDate(`${selectedDate.getFullYear()}-${String(selectedDate.getMonth() + 1).padStart(2, "0")}-${String(selectedDate.getDate()).padStart(2, "0")}`);
               onClose();
             }}
             className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition hover:bg-blue-700"

@@ -10,6 +10,7 @@ import {
   Trash2,
   Undo2,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 
 /* -------------------------------------------------------------------------- */
 /*  Data                                                                       */
@@ -275,13 +276,9 @@ function DirectoryPage({ view, rows, onAction }) {
     <>
       {/* Toolbar */}
       <div className="mt-6 flex flex-wrap items-center gap-3">
-        <button
-          type="button"
-          aria-label="Filters"
-          className={`flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-white transition-colors hover:bg-slate-800 ${focusRing}`}
-        >
+        <div aria-hidden="true" className="flex h-10 w-10 items-center justify-center rounded-lg bg-slate-900 text-white">
           <SlidersHorizontal className="h-4 w-4" strokeWidth={1.75} />
-        </button>
+        </div>
 
         <label className="relative min-w-0 flex-1 basis-64">
           <span className="sr-only">Search</span>
@@ -427,13 +424,13 @@ export default function WorkspaceAdmin() {
       <div className="mx-auto max-w-screen-xl px-4 py-4 sm:px-4">
        
 
-        <button
-          type="button"
+        <Link
+          to="/dashboard"
           className={`mt-5 inline-flex items-center gap-2 rounded text-sm text-slate-700 hover:text-slate-900 ${focusRing}`}
         >
           <ChevronLeft className="h-4 w-4" strokeWidth={2} />
           Workspaces
-        </button>
+        </Link>
 
         <div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-b-2 border-slate-100 pb-4">
           <h1 className="text-3xl font-light tracking-tight text-slate-800">

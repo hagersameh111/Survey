@@ -1,8 +1,8 @@
 import { SlidersHorizontal } from "lucide-react";
 
-const FilterButton = () => {
+const FilterButton = ({ onClick }) => {
   return (
-    <button className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-surface transition hover:bg-background">
+    <button type="button" onClick={onClick} aria-label="Filters" className="flex h-12 w-12 items-center justify-center rounded-xl border border-border bg-surface transition hover:bg-background">
 
       <SlidersHorizontal
         size={20}

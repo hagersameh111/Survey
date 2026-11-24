@@ -1,6 +1,8 @@
 import {
   getResponseForForm,
+  exportResponsesForForm,
   listResponsesForForm,
+  saveFinalRating,
   submitResponse,
 } from "./response.service.js";
 
@@ -54,6 +56,15 @@ export const getById = async (req, res) => {
   }
 };
 
+export const exportAll = async (req, res) => {
+  try {
+    const data = await exportResponsesForForm(req.params.formId, req.user.id);
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    return handleReadError(res, error, "Export responses");
+  }
+};
+
 export const submit = async (req, res) => {
   try {
     const result = await submitResponse(req.params.formId, req.body, {
@@ -79,5 +90,19 @@ export const submit = async (req, res) => {
       success: false,
       message: "Internal server error",
     });
+  }
+};
+
+export const saveFinishRating = async (req, res) => {
+  try {
+    const data = await saveFinalRating(req.params.formId, req.params.responseId, req.body.rating, {
+      userId: req.user?.id,
+      participantToken: req.get("X-Participant-Token"),
+    });
+    return res.status(200).json({ success: true, data });
+  } catch (error) {
+    if ([400, 401, 404].includes(error.statusCode)) return res.status(error.statusCode).json({ success: false, message: error.message });
+    console.error("Save finish rating error:", error);
+    return res.status(500).json({ success: false, message: "Internal server error" });
   }
 };

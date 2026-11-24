@@ -15,6 +15,7 @@ const RowLayout = ({
   onSwap,
   onQr,
   onSave,
+  busy = false,
 }) => {
   const hasShort = Boolean(row.shortUrl);
 
@@ -35,11 +36,11 @@ const RowLayout = ({
       <button
         type="button"
         onClick={onAction}
-        disabled={actionDisabled}
+        disabled={actionDisabled || busy}
         className="flex h-12 w-32 shrink-0 items-center justify-center gap-2 rounded-xl bg-primary text-sm font-medium text-white transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
       >
         <Link2 size={18} />
-        {actionLabel}
+        {busy ? "Working…" : actionLabel}
       </button>
 
       <ArrowRight size={16} className="mx-6 shrink-0 text-text-muted opacity-60" />
@@ -50,7 +51,8 @@ const RowLayout = ({
         onToggle={(active) => onChange({ active })}
       />
 
-      <ExpirationPicker value={row.expiration} onChange={(expiration) => onChange({ expiration })} />
+      <label className="flex shrink-0 items-center gap-2 text-xs text-text-secondary"><input type="checkbox" checked={row.expirationEnabled ?? Boolean(row.expiration)} onChange={(event) => onChange({ expirationEnabled: event.target.checked })} />Expires</label>
+      {(row.expirationEnabled ?? Boolean(row.expiration)) && <ExpirationPicker value={row.expiration} onChange={(expiration) => onChange({ expiration })} />}
 
       <QRCodeButton disabled={!hasShort} onClick={onQr} />
       <SaveButton disabled={!hasShort} onClick={onSave} />

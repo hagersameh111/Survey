@@ -45,17 +45,18 @@ const FileInput = ({ file, onChange }) => {
   );
 };
 
-const FileRow = ({ row, onChange, onSwap, onShorten, onQr, onSave }) => (
+const FileRow = ({ row, onChange, onSwap, onShorten, onQr, onSave, busy }) => (
   <RowLayout
     row={row}
     onChange={onChange}
     onSwap={onSwap}
     onQr={onQr}
     onSave={onSave}
-    source={<FileInput file={row.file} onChange={(file) => onChange({ file })} />}
+    source={<FileInput file={row.file || (row.fileName ? { name: row.fileName } : null)} onChange={(file) => onChange({ file })} />}
     actionLabel="Generate URL"
     actionDisabled={!row.file}
     onAction={onShorten}
+    busy={busy}
   />
 );
 

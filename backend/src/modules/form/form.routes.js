@@ -2,6 +2,8 @@ import express from "express";
 import {
   create,
   close,
+  pause,
+  resume,
   duplicate,
   getById,
   getAll,
@@ -94,6 +96,8 @@ router.put(
 
 router.post("/:formId/publish", auth, validateFormId, publish);
 router.post("/:formId/close", auth, validateFormId, close);
+router.post("/:formId/pause", auth, validateFormId, pause);
+router.post("/:formId/resume", auth, validateFormId, resume);
 router.post("/:formId/reopen", auth, validateFormId, reopen);
 
 router.patch(

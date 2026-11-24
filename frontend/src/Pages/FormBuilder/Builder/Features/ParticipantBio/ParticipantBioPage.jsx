@@ -1,5 +1,4 @@
 import Breadcrumb from "../../Shared/Breadcrumb";
-import FormHeader from "../../Shared/FormHeader";
 import { User, Calendar, Mail, Phone, MapPin, Globe, Hash, VenusAndMars } from "lucide-react";
 
 const bioFieldDefinitions = [
@@ -10,10 +9,9 @@ const bioFieldDefinitions = [
   ["gender", "Gender", VenusAndMars, "Gender"], ["customised", "Description", User, ""],
 ];
 
-const ParticipantBioPage = ({ page = {}, onUpdatePage, bioFields = {} }) => (
+const ParticipantBioPage = ({ page = {}, bioFields = {} }) => (
   <main className="relative flex-1 rounded-2xl border border-border bg-surface p-8 shadow-sm">
     <Breadcrumb />
-    <FormHeader title={page.title} description={page.description} onChange={onUpdatePage} />
     <div className="mt-8 rounded-2xl bg-[#F7F8FC] p-8 shadow-xs">
       <h2 className="mb-2 text-center text-2xl font-bold text-primary">{page.title || "Personal Info"}</h2>
       {page.description && <p className="mb-8 text-center text-text-secondary">{page.description}</p>}
@@ -26,7 +24,7 @@ const ParticipantBioPage = ({ page = {}, onUpdatePage, bioFields = {} }) => (
           </div>;
         })}
       </div>
-      <div className="mt-8 text-center"><button type="button" className="rounded-xl bg-primary px-16 py-3.5 font-medium text-white">{page.bioButton || "Confirm"}</button></div>
+      <div className="mt-8 text-center"><div aria-hidden="true" className="inline-flex rounded-xl bg-primary px-16 py-3.5 font-medium text-white">{page.buttonText || "Confirm"}</div></div>
     </div>
   </main>
 );

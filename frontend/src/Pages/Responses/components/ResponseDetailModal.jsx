@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Grid, List, X } from "lucide-react";
 
 const ResponseDetailModal = ({ isOpen, onClose, respondentName = "Respondent", completedCount = 0, totalCount = 0, responses = [], loading = false, error = "" }) => {
@@ -76,7 +76,7 @@ const ResponseDetailModal = ({ isOpen, onClose, respondentName = "Respondent", c
               >
                 <div>
                   <h3 className="text-xs font-semibold text-gray-900 mb-2">
-                    {item.id}. {item.question}
+                    {item.question}
                   </h3>
                   <p className="text-sm text-gray-600 mt-2">{item.answer}</p>
                 </div>

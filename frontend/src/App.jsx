@@ -10,6 +10,7 @@ import ForgotPassword from "./Pages/Auth/ForgotPassword.jsx";
 import OtpVerification from "./Pages/Auth/OtpVerification.jsx";
 import ResetPassword from "./Pages/Auth/ResetPassword.jsx";
 import Pricing from "./Pages/Auth/Pricing.jsx";
+import Checkout from "./Pages/Auth/Checkout.jsx";
 
 // 2. Dashboard & Shared Layout Imports
 import Layout from "./components/layout/Layout";
@@ -26,6 +27,7 @@ import AcceptInvitation from "./Pages/AcceptInvitation/AcceptInvitation.jsx";
 import AccountSettings from "./Pages/Settings/AccountSettings.jsx";
 import PricingCheckout from "./Pages/Settings/Pricingcheckout.jsx";
 import WorkspaceAdmin from "./Pages/Settings/Workspaceadmin.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
 
 const NotFound = () => (
   <div className="flex min-h-screen items-center justify-center text-3xl font-bold text-text">
@@ -35,11 +37,13 @@ const NotFound = () => (
 
 const App = () => (
   <WorkspaceProvider>
+  <AuthProvider>
     <BrowserRouter>
       <Routes>
       {/* Authentication Routes wrapped in split-screen AuthLayout */}
       <Route element={<AuthLayout />}>
         <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/verify-otp" element={<OtpVerification />} />
@@ -48,6 +52,8 @@ const App = () => (
 
       {/* Standalone Pricing Page */}
       <Route path="/pricing" element={<PricingCheckout />} />
+      <Route path="/plans" element={<Pricing />} />
+      <Route path="/checkout" element={<Checkout />} />
 
       {/* Dashboard Routes that share the common Navbar layout */}
       <Route element={<Layout />}>
@@ -78,6 +84,7 @@ const App = () => (
       </Routes>
     </BrowserRouter>
   </WorkspaceProvider>
+  </AuthProvider>
 );
 
 export default App;

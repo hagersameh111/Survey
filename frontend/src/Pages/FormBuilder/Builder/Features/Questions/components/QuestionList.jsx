@@ -8,18 +8,20 @@ const QuestionList = ({ questions = [], selectedQuestionId, onDeleteQuestion, on
   return (
     <div className="rounded-3xl bg-white p-6 shadow-sm">
       {/* Header / Toggle Area */}
-      <div 
-        className="flex cursor-pointer items-center justify-between transition-opacity hover:opacity-80"
-        onClick={() => setIsCollapsed(!isCollapsed)}
+      <button
+        type="button"
+        aria-expanded={!isCollapsed}
+        onClick={() => setIsCollapsed((collapsed) => !collapsed)}
+        className="flex w-full items-center justify-between text-left transition-opacity hover:opacity-80"
       >
         <div className="flex items-center gap-3">
           <LayoutList size={20} className="text-text-secondary" />
           <h2 className="text-xl font-bold text-text">Questions List</h2>
         </div>
-        <button className="text-text-muted transition hover:text-primary">
+        <span className="text-text-muted transition hover:text-primary">
           {isCollapsed ? <ChevronRight size={20} /> : <ChevronDown size={20} />}
-        </button>
-      </div>
+        </span>
+      </button>
 
       {/* Collapsible Content */}
       {!isCollapsed && (
