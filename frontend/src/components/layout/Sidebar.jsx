@@ -1,11 +1,9 @@
 import { useMemo, useState } from "react";
 import { Plus, Search, LayoutGrid, ChevronUp, UserPlus } from "lucide-react";
-import { Link, NavLink, useLocation } from "react-router-dom";
-import InviteMembersModal from "../modals/InviteMembersModal";
 import { useWorkspace } from "../../context/WorkspaceContext.jsx";
-import { Link, NavLink, useNavigate } from "react-router-dom";
 import InviteMembersModal from "../modals/InviteMembersModal";
 import { createForm } from "../../api/forms";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 
 const Section = ({ title, items }) => {
   const [open, setOpen] = useState(true);

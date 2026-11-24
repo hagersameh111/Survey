@@ -83,8 +83,8 @@ const App = () => (
       <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
-  </WorkspaceProvider>
-  </AuthProvider>
+   </AuthProvider>
+</WorkspaceProvider>
 );
 
 export default App;

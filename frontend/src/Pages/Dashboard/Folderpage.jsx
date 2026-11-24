@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useOutletContext, useParams } from "react-router-dom";
 import DashboardHeader from "./components/DashboardHeader";
@@ -5,21 +6,18 @@ import FormsTable from "./components/FormsTable";
 import WorkspaceGrid from "./components/WorkspaceGrid";
 import WorkspaceEmpty from "./components/WorkspaceEmpty";
 import useForms from "../../hooks/useForms.js";
-import { closeForm, deleteForm, duplicateForm, reopenForm, updateForm } from "../../api/forms";
+import {
+  closeForm,
+  deleteForm,
+  duplicateForm,
+  reopenForm,
+  updateForm,
+} from "../../api/forms";
 import { useWorkspace } from "../../context/WorkspaceContext.jsx";
-
-// Reserved folderSlug that means "the Shared tab" rather than a personal
-// folder. Switching to it only changes which collection of surveys is
-// displayed (the active workspace's Shared pool) — it never changes any
-// survey's visibility/ownership, and creating from here always creates a
-// workspace-owned survey (see Sidebar.jsx's scope-aware "Create form").
-export const SHARED_TAB_SLUG = "shared";
-
-export const SORT_OPTIONS = [
-  { value: "created_at", label: "Date created", order: "desc" },
-  { value: "updated_at", label: "Last updated", order: "desc" },
-  { value: "title", label: "Name", order: "asc" },
-];
+import {
+  SHARED_TAB_SLUG,
+  SORT_OPTIONS,
+} from "./folderConstants";
 
 const Skeleton = () => (
   <div className="mt-6 space-y-3" aria-busy="true">

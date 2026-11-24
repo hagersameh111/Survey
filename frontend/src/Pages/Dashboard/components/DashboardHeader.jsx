@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { CalendarDays, UserPlus, ChevronDown, Check } from "lucide-react";
 import ViewSwitcher from "./ViewSwitcher";
 import InviteMembersModal from "../../../components/modals/InviteMembersModal";
-import { SORT_OPTIONS } from "../Folderpage";
+import { SORT_OPTIONS } from "../folderConstants";
 const SortDropdown = ({ sort, onChange }) => {
   const [open, setOpen] = useState(false);
   const ref = useRef(null);

@@ -18,9 +18,8 @@ import {
 } from "../../api/workspaces";
 import InviteMembersModal from "../../components/modals/InviteMembersModal.jsx";
 import { PLAN_LIMITS, PLAN_LABELS } from "../../config/plans.js";
-import { Link } from "react-router-dom"; 
 import { useAuth } from "../../context/AuthContext";
-import InviteMembersModal from "../../components/modals/InviteMembersModal";
+
 
 /* -------------------------------------------------------------------------- */
 /*  Data                                                                       */

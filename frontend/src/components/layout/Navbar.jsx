@@ -25,7 +25,6 @@ const Navbar = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
-  const username = user.username;
   const { activeWorkspaceId, activeWorkspace } = useWorkspace();
   const { user, logout } = useAuth();
   const username = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email : "Account";
