@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import "./App.css";
+import { WorkspaceProvider } from "./context/WorkspaceContext.jsx";
 
 // 1. Auth & Layout Imports
 import AuthLayout from "./Pages/Auth/AuthLayout.jsx";
@@ -22,6 +23,7 @@ import UrlShortener from "./Pages/UrlShortener/UrlShortener.jsx";
 // 3. Form Builder & Preview Imports
 import FormBuilder from "./Pages/FormBuilder/FormBuilder.jsx";
 import PublicForm from "./Pages/PublicForm/PublicForm.jsx";
+import AcceptInvitation from "./Pages/AcceptInvitation/AcceptInvitation.jsx";
 import AccountSettings from "./Pages/Settings/AccountSettings.jsx";
 import PricingCheckout from "./Pages/Settings/Pricingcheckout.jsx";
 import WorkspaceAdmin from "./Pages/Settings/Workspaceadmin.jsx";
@@ -34,6 +36,7 @@ const NotFound = () => (
 );
 
 const App = () => (
+  <WorkspaceProvider>
   <AuthProvider>
     <BrowserRouter>
       <Routes>
@@ -73,10 +76,14 @@ const App = () => (
       {/* Live Form Preview */}
       <Route path="/view" element={<PublicForm />} />
 
+      {/* Workspace invitation acceptance */}
+      <Route path="/accept-invitation" element={<AcceptInvitation />} />
+
       {/* 404 Catch-all */}
       <Route path="*" element={<NotFound />} />
       </Routes>
     </BrowserRouter>
+  </WorkspaceProvider>
   </AuthProvider>
 );
 

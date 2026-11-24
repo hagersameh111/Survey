@@ -5,6 +5,8 @@ import responseRoutes, {
   publicSubmissionRoutes,
 } from "./modules/response/response.routes.js";
 import publicFormRoutes from "./modules/form/public-form.routes.js";
+import workspaceRoutes from "./modules/workspace/workspace.routes.js";
+import invitationRoutes from "./modules/workspace/invitation.routes.js";
 import shortUrlRoutes, { publicShortUrlRoutes } from "./modules/short-url/short-url.routes.js";
 
 const app = express();
@@ -16,6 +18,8 @@ app.use("/api/v1/public/forms", publicFormRoutes);
 app.use("/api/v1/public/forms", publicSubmissionRoutes);
 app.use("/api/v1/forms", formRoutes);
 app.use("/api/v1/forms", responseRoutes);
+app.use("/api/v1/workspaces", workspaceRoutes);
+app.use("/api/v1/invitations", invitationRoutes);
 app.use("/api/v1/short-urls", shortUrlRoutes);
 app.use("/s", publicShortUrlRoutes);
 

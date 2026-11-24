@@ -42,6 +42,19 @@ const userSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+
+    // Denormalized counter of this user's own currently-published Private
+    // surveys (Free-plan limit, see config/plans.js's
+    // PLAN_LIMITS.free.maxActiveSurveys). Mutated ONLY via the atomic
+    // conditional updates in user-write-fence.js (never via a full-document
+    // load + save()), mirroring Workspace's activeSurveyCount — see that
+    // model's comment for why no writeFence/optimisticConcurrency is needed
+    // alongside it.
+    activePrivateSurveyCount: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   {
     timestamps: true,

@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { NavLink, Link, useNavigate } from "react-router-dom";
 import { FileText, Users, Link2, ChevronRight, UserPlus, LogOut } from "lucide-react";
 import InviteMembersModal from "../modals/InviteMembersModal";
+import WorkspaceDropdown from "../../Pages/Dashboard/components/WorkspaceDropdown.jsx";
+import { useWorkspace } from "../../context/WorkspaceContext.jsx";
 import { useAuth } from "../../context/AuthContext";
 
 import logo from "/logo.png";
@@ -23,6 +25,8 @@ const Navbar = () => {
   const [showInviteModal, setShowInviteModal] = useState(false);
   const menuRef = useRef(null);
   const navigate = useNavigate();
+  const username = user.username;
+  const { activeWorkspaceId, activeWorkspace } = useWorkspace();
   const { user, logout } = useAuth();
   const username = user ? `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email : "Account";
   const initials = username.split(/\s+/).map((part) => part[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
@@ -53,10 +57,14 @@ const Navbar = () => {
     <header className="px-4 pt-4">
       <nav className="flex min-h-14 flex-wrap items-center justify-between gap-y-2 rounded-2xl bg-surface px-3 py-2 shadow-sm sm:flex-nowrap sm:px-5 sm:py-0">
         {/* Logo */}
-        <NavLink to="/dashboard" className="flex items-center gap-3">
-          <img src={logo} alt="FormHub" className="h-8 w-auto" />
-          <span className="text-lg font-semibold text-text">FormHub</span>
-        </NavLink>
+        <div className="flex items-center gap-4">
+          <NavLink to="/dashboard" className="flex items-center gap-3">
+            <img src={logo} alt="FormHub" className="h-8 w-auto" />
+            <span className="text-lg font-semibold text-text">FormHub</span>
+          </NavLink>
+          <div className="hidden h-6 w-px bg-border sm:block" />
+          <WorkspaceDropdown />
+        </div>
 
         {/* Navigation */}
         <div className="order-3 flex w-full items-center gap-1 overflow-x-auto pb-1 sm:order-none sm:w-auto sm:gap-2 sm:overflow-visible sm:pb-0">
@@ -134,7 +142,9 @@ const Navbar = () => {
                   setMenuOpen(false);
                   setShowInviteModal(true);
                 }}
-                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-primary py-3 font-medium text-primary transition hover:bg-primary-light"
+                disabled={!activeWorkspaceId}
+                title={!activeWorkspaceId ? "Switch to a team workspace to invite members" : undefined}
+                className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl border border-primary py-3 font-medium text-primary transition hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <UserPlus size={18} />
                 Invite Members
@@ -154,7 +164,12 @@ const Navbar = () => {
         </div>
       </nav>
 
-      <InviteMembersModal open={showInviteModal} onClose={() => setShowInviteModal(false)} />
+      <InviteMembersModal
+        open={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        workspaceId={activeWorkspaceId}
+        workspaceName={activeWorkspace?.name}
+      />
     </header>
   );
 };

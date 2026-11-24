@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getForms } from "../api/forms";
 
-export default function useForms({ folder, sort, order }) {
+export default function useForms({ folder, sort, order, workspaceId }) {
   const [forms, setForms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -11,7 +11,7 @@ export default function useForms({ folder, sort, order }) {
     const ctrl = new AbortController();
     setLoading(true);
     setError(null);
-    getForms({ folder, sort, order }, ctrl.signal)
+    getForms({ folder, sort, order, workspaceId }, ctrl.signal)
       .then((f) => !ctrl.signal.aborted && setForms(f))
       .catch((e) => {
         if (ctrl.signal.aborted) return; // cancelled by navigation, not a real error
@@ -19,7 +19,7 @@ export default function useForms({ folder, sort, order }) {
       })
       .finally(() => !ctrl.signal.aborted && setLoading(false));
     return () => ctrl.abort();
-  }, [folder, sort, order, tick]);
+  }, [folder, sort, order, workspaceId, tick]);
 
   const refetch = useCallback(() => setTick((t) => t + 1), []);
   return { forms, loading, error, refetch };

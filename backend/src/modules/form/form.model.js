@@ -169,6 +169,32 @@ const formSchema = new mongoose.Schema(
       index: true,
     },
 
+    // Team-workspace visibility. "shared" forms belong to `workspace` (see
+    // workspace/workspace.model.js) even though `owner` keeps recording the
+    // original creator for attribution. The private<->workspace invariant
+    // (workspace is set iff visibility === "shared") is enforced in
+    // form.service.js, not here, matching this schema's existing light
+    // validation style.
+    visibility: {
+      type: String,
+      enum: ["private", "shared"],
+      default: "private",
+    },
+
+    workspace: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Workspace",
+      default: null,
+    },
+
+    // URL convenience only — never treated as authorization. Length is
+    // plan-governed (see config/plans.js) and generated in form.service.js.
+    shortCode: {
+      type: String,
+      unique: true,
+      sparse: true,
+    },
+
     settings: {
       type: settingsSchema,
       default: () => ({}),

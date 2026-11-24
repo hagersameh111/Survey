@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { Plus, Search, LayoutGrid, ChevronUp, UserPlus } from "lucide-react";
+import { Link, NavLink, useLocation } from "react-router-dom";
+import InviteMembersModal from "../modals/InviteMembersModal";
+import { useWorkspace } from "../../context/WorkspaceContext.jsx";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import InviteMembersModal from "../modals/InviteMembersModal";
 import { createForm } from "../../api/forms";
@@ -50,6 +53,7 @@ const Section = ({ title, items }) => {
 const Sidebar = ({ folders, stats }) => {
   const [search, setSearch] = useState("");
   const [showInviteModal, setShowInviteModal] = useState(false);
+  const { activeWorkspaceId, activeWorkspace } = useWorkspace();
   const [showFolderModal, setShowFolderModal] = useState(false);
   const [folderName, setFolderName] = useState("");
   const [folderError, setFolderError] = useState("");
@@ -63,6 +67,12 @@ const Sidebar = ({ folders, stats }) => {
 
   const percent = Math.min(100, (stats.collected / (stats.limit || 1)) * 100);
 
+  // The create action always uses the currently selected scope: creating
+  // from the Shared tab produces a workspace-owned survey in the active
+  // workspace; creating from anywhere else produces a personal survey.
+  const createHref = activeWorkspaceId
+    ? `/form-builder?visibility=shared&workspaceId=${activeWorkspaceId}`
+    : "/form-builder";
   const handleCreateFolder = async (event) => {
     event.preventDefault();
     const name = folderName.trim();
@@ -84,7 +94,7 @@ const Sidebar = ({ folders, stats }) => {
     <aside className="flex w-full shrink-0 flex-col gap-6 rounded-2xl bg-surface p-4 shadow-sm sm:p-5 lg:w-72">
       <div className="space-y-4">
         <Link
-          to="/form-builder"
+          to={createHref}
           className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary py-3 text-white transition hover:bg-primary-hover"
         >
           <Plus size={18} />
@@ -93,7 +103,9 @@ const Sidebar = ({ folders, stats }) => {
 
         <button
           onClick={() => setShowInviteModal(true)}
-          className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary bg-transparent py-3 text-primary transition hover:bg-primary-light"
+          disabled={!activeWorkspaceId}
+          title={!activeWorkspaceId ? "Switch to a team workspace to invite members" : undefined}
+          className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary bg-transparent py-3 text-primary transition hover:bg-primary-light disabled:cursor-not-allowed disabled:opacity-50"
         >
           <UserPlus size={18} />
           <span className="font-medium">Invite New Member</span>
@@ -122,8 +134,9 @@ const Sidebar = ({ folders, stats }) => {
           </button>
         </div>
 
-        <Section title="Private" items={filtered.filter((f) => f.section === "private")} />
-        <Section title="Shared surveys" items={filtered.filter((f) => f.section === "shared")} />
+        {!activeWorkspaceId && (
+          <Section title="Private" items={filtered.filter((f) => f.section === "private")} />
+        )}
       </div>
 
       <div className="border-t border-border pt-5">
@@ -137,6 +150,12 @@ const Sidebar = ({ folders, stats }) => {
         </p>
       </div>
 
+      <InviteMembersModal
+        open={showInviteModal}
+        onClose={() => setShowInviteModal(false)}
+        workspaceId={activeWorkspaceId}
+        workspaceName={activeWorkspace?.name}
+      />
       <InviteMembersModal open={showInviteModal} onClose={() => setShowInviteModal(false)} />
       {showFolderModal && <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) setShowFolderModal(false); }}>
         <form onSubmit={handleCreateFolder} className="w-full max-w-md rounded-2xl bg-surface p-6 shadow-xl">

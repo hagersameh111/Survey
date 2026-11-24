@@ -174,6 +174,8 @@ const FormBuilder = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [formId, setFormId] = useState(searchParams.get("formId") || pathFormId || null);
   const [folder, setFolder] = useState(searchParams.get("folder") || "my-workspace");
+  const [creationVisibility] = useState(searchParams.get("visibility") === "shared" ? "shared" : "private");
+  const [creationWorkspaceId] = useState(searchParams.get("workspaceId") || null);
   const [selectedQuestionId, setSelectedQuestionId] = useState(null);
   const [savedPages, setSavedPages] = useState([]);
   const [isLoading, setIsLoading] = useState(Boolean(searchParams.get("formId")));
@@ -367,7 +369,13 @@ const FormBuilder = () => {
     try {
       let activeFormId = formId;
       if (!activeFormId) {
-        const form = await createForm({ title: formTitle, description: formDescription, folder });
+        const form = await createForm({
+          title: formTitle,
+          description: formDescription,
+          folder,
+          visibility: creationVisibility,
+          ...(creationVisibility === "shared" ? { workspaceId: creationWorkspaceId } : {}),
+        });
         activeFormId = form._id;
         setFormId(activeFormId);
         setSearchParams({ formId: activeFormId }, { replace: true });
@@ -489,6 +497,11 @@ const FormBuilder = () => {
       />
 
       {error && <div role="alert" className="mx-6 mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+      {!formId && creationVisibility === "shared" && (
+        <div className="mx-6 mt-4 rounded-xl bg-primary-light p-3 text-sm text-primary">
+          Creating a Shared survey — it will belong to the team workspace and count toward its plan's active-survey limit once published.
+        </div>
+      )}
       {notice && <div role="status" className="mx-6 mt-4 rounded-xl bg-green-50 p-3 text-sm text-green-700">{notice}</div>}
       {isLoading ? (
         <div className="p-10 text-center text-text-secondary">Loading form…</div>
